@@ -10,7 +10,7 @@ namespace SchoolManagementSystem.Api.Models
         public DateTime DateOfBirth { get; set; }
         public int CourseId { get; set; }
         public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();
-        public Course Course { get; set; }
+        public Course? Course { get; set; }
 
     }
 }

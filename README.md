@@ -52,12 +52,23 @@ Actualmente el sistema permite:
 
 - Crear estudiantes
 - Listar estudiantes
+- Registro de Asistencia diaria
+- Lógica automática:
+        - Alumnos presentes / ausentes
+        - Reemplazo de asistencia (sin duplicados)
+        - Reemplazo de asistencia (sin duplicados)
 - Probar la API mediante Swagger
 
 Endpoints disponibles:
  
- GET /api/student
- POST /api/student
+- Crear curso
+POST /api/course
+- Crear alumno
+POST /api/student
+- Tomar asistencia
+POST /api/attendance/take-attendance
+- Ver asistencias
+GET /api/attendance
 
 ---
 
@@ -80,10 +91,11 @@ El sistema está en desarrollo activo.
 
 Actualmente se encuentra implementado:
 
-- Entidad Student
+- Filtros por curso y fecha
 - DbContext con Entity Framework
 - Persistencia en base de datos InMemory
-- Endpoints básicos para estudiantes
+- DTOs mmas especificos
+- Separacion en capa de servicios
 
 ---
 
@@ -91,8 +103,6 @@ Actualmente se encuentra implementado:
 
 Próximos pasos planificados:
 
-- Implementar entidad Course
-- Implementar entidad Attendance
 - Persistencia con SQL Server
 - Migraciones con Entity Framework
 - Arquitectura limpia (Clean Architecture)
