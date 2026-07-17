@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace SchoolManagementSystem.Api.Controllers
 {
@@ -15,10 +16,14 @@ namespace SchoolManagementSystem.Api.Controllers
             _context = context;
         }
 
+
         [HttpGet]
         public IActionResult GetStudents()
         {
-            var students = _context.Students.ToList();
+            var students = _context.Students
+                .Include(s => s.Course)
+                .ToList();
+
             return Ok(students);
         }
 

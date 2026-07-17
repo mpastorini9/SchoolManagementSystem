@@ -18,7 +18,10 @@ namespace SchoolManagementSystem.Api.Controllers
         [HttpGet]
         public IActionResult GetCourses()
         {
-            var courses = _context.Courses.ToList();
+            var courses = _context.Courses
+                .OrderBy(c => c.Name)
+                .ToList();
+
             return Ok(courses);
         }
 
@@ -28,7 +31,10 @@ namespace SchoolManagementSystem.Api.Controllers
             _context.Courses.Add(course);
             _context.SaveChanges();
 
-            return Ok(course);
+            return CreatedAtAction(
+                nameof(GetCourses),
+                new { id = course.Id },
+                course);
         }
     }
 }
