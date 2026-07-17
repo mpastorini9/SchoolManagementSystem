@@ -1,0 +1,62 @@
+.card{
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,.12);
+    margin:30px;
+}
+
+.student-form{
+    display:flex;
+    gap:10px;
+    margin-bottom:25px;
+}
+
+.student-form input{
+    flex:1;
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+}
+
+.student-form button{
+    background:#198754;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.student-form button:hover{
+    background:#157347;
+}
+
+.student-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.student-table th{
+    background:#0d6efd;
+    color:white;
+    padding:12px;
+}
+
+.student-table td{
+    padding:12px;
+    border-bottom:1px solid #ddd;
+}
+
+.student-table tr:hover{
+    background:#f4f7fb;
+}
+
+.edit-btn,
+.delete-btn{
+    border:none;
+    background:none;
+    cursor:pointer;
+    font-size:18px;
+    margin:0 4px;
+}

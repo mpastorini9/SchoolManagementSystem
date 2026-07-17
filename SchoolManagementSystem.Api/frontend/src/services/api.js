@@ -15,3 +15,7 @@ export async function createStudent(student) {
 
   return res.json();
 }
+export async function getCourses() {
+    const res = await fetch(`${API_URL}/Course`);
+    return res.json();
+}
