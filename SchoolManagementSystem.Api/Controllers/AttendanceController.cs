@@ -52,6 +52,21 @@ namespace SchoolManagementSystem.Api.Controllers
                 return NotFound("Course not found.");
             }
 
+            var submittedStudentIds = request.AbsentStudentsIds.Distinct().ToList();
+            var submittedStudents = _context.Students
+                .Where(student => submittedStudentIds.Contains(student.Id))
+                .ToList();
+
+            if (submittedStudents.Count != submittedStudentIds.Count)
+            {
+                return BadRequest("One or more absent student IDs do not exist.");
+            }
+
+            if (submittedStudents.Any(student => student.CourseId != request.CourseId))
+            {
+                return BadRequest("All absent students must belong to the selected course.");
+            }
+
             var alreadyTaken = _context.Attendances
                 .Any(a => a.Date == request.Date && a.Student.CourseId == request.CourseId);
 
