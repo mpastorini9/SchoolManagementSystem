@@ -28,6 +28,21 @@ namespace SchoolManagementSystem.Api.Controllers
         [HttpPost("take-attendance")]
         public IActionResult TakeAttendance([FromBody] TakeAttendanceRequest request)
         {
+            if (request.CourseId <= 0)
+            {
+                return BadRequest("CourseId must be greater than zero.");
+            }
+
+            if (request.Date == default)
+            {
+                return BadRequest("Date is required.");
+            }
+
+            if (request.AbsentStudentsIds is null)
+            {
+                return BadRequest("AbsentStudentsIds is required.");
+            }
+
             var alreadyTaken = _context.Attendances
             .Any(a => a.Date == request.Date && a.Student.CourseId == request.CourseId);
             List<Attendance> existingAttendances = new();
@@ -72,16 +87,6 @@ namespace SchoolManagementSystem.Api.Controllers
             _context.SaveChanges();
 
             return Ok();
-        }
-
-
-        [HttpPost]
-        public IActionResult CreateAttendance(Attendance attendance)
-        {
-            _context.Attendances.Add(attendance);
-            _context.SaveChanges();
-
-            return Ok(attendance);
         }
     }
 }
