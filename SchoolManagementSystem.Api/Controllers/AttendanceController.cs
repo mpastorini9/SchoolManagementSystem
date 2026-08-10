@@ -43,23 +43,6 @@ namespace SchoolManagementSystem.Api.Controllers
                 return BadRequest("AbsentStudentsIds is required.");
             }
 
-            var alreadyTaken = _context.Attendances
-            .Any(a => a.Date == request.Date && a.Student.CourseId == request.CourseId);
-            List<Attendance> existingAttendances = new();
-            if (alreadyTaken)
-            {
-                //return BadRequest("Attendance for this course and date already exists.");
-                 existingAttendances = _context.Attendances
-                    .Where(a => a.Date == request.Date && a.Student.CourseId == request.CourseId)
-                    .ToList();
-
-            _context.Attendances.RemoveRange(existingAttendances);
-            _context.SaveChanges();
-
-            }
-
-            
-
             var course = _context.Courses
                 .Include(c => c.Students)
                 .FirstOrDefault(c => c.Id == request.CourseId);
@@ -67,6 +50,14 @@ namespace SchoolManagementSystem.Api.Controllers
             if (course == null)
             {
                 return NotFound("Course not found.");
+            }
+
+            var alreadyTaken = _context.Attendances
+                .Any(a => a.Date == request.Date && a.Student.CourseId == request.CourseId);
+
+            if (alreadyTaken)
+            {
+                return Conflict("Attendance for this course and date already exists.");
             }
 
             var attendances = new List<Attendance>();
