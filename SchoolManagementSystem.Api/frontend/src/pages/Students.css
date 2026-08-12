@@ -1,62 +1,341 @@
-.card{
-    background:white;
-    padding:30px;
-    border-radius:12px;
-    box-shadow:0 5px 15px rgba(0,0,0,.12);
-    margin:30px;
+.students-page,
+.students-page * {
+  box-sizing: border-box;
 }
 
-.student-form{
-    display:flex;
-    gap:10px;
-    margin-bottom:25px;
+.students-page {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 20px 12px 32px;
+  color: #1f2937;
 }
 
-.student-form input{
-    flex:1;
-    padding:10px;
-    border:1px solid #ccc;
-    border-radius:6px;
+.students-header {
+  margin-bottom: 16px;
 }
 
-.student-form button{
-    background:#198754;
-    color:white;
-    border:none;
-    padding:10px 20px;
-    border-radius:6px;
-    cursor:pointer;
+.students-eyebrow {
+  margin: 0 0 6px;
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.student-form button:hover{
-    background:#157347;
+.students-header h2,
+.students-section-header h3 {
+  margin: 0;
+  color: #111827;
 }
 
-.student-table{
-    width:100%;
-    border-collapse:collapse;
+.students-header h2 {
+  font-size: 1.6rem;
 }
 
-.student-table th{
-    background:#0d6efd;
-    color:white;
-    padding:12px;
+.students-header > p:last-child,
+.students-section-header p {
+  margin: 8px 0 0;
+  color: #4b5563;
+  line-height: 1.5;
 }
 
-.student-table td{
-    padding:12px;
-    border-bottom:1px solid #ddd;
+.students-card {
+  min-width: 0;
+  padding: 16px 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
 }
 
-.student-table tr:hover{
-    background:#f4f7fb;
+.students-section-header h3 {
+  font-size: 1rem;
+}
+
+.students-section-header p {
+  font-size: 0.9rem;
+}
+
+.student-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.student-field {
+  min-width: 0;
+}
+
+.student-field label {
+  display: block;
+  margin-bottom: 7px;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.student-field input,
+.student-field select,
+.student-form > button {
+  width: 100%;
+  min-height: 48px;
+  font: inherit;
+  border-radius: 10px;
+}
+
+.student-field input,
+.student-field select {
+  min-width: 0;
+  padding: 0 12px;
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.student-form > button {
+  align-self: end;
+  padding: 12px 18px;
+  color: #ffffff;
+  font-weight: 700;
+  background: #198754;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.student-form > button:hover {
+  background: #157347;
+}
+
+.student-form > button:active {
+  transform: translateY(1px);
+}
+
+.student-field input:focus-visible,
+.student-field select:focus-visible,
+.student-form > button:focus-visible,
+.edit-btn:focus-visible,
+.delete-btn:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 2px;
+}
+
+.students-list {
+  min-width: 0;
+  margin-top: 24px;
+}
+
+.students-section-header--list {
+  margin-bottom: 12px;
+}
+
+.students-section-header--list p {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.student-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.student-table thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.student-table tr {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.student-table td {
+  display: grid;
+  grid-template-columns: minmax(88px, 0.7fr) minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  color: #1f2937;
+  overflow-wrap: anywhere;
+}
+
+.student-table td + td {
+  border-top: 1px solid #eef2f7;
+}
+
+.student-table td::before {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 700;
+  content: attr(data-label);
+}
+
+.student-actions {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid #eef2f7;
+}
+
+.student-actions::before {
+  display: none;
 }
 
 .edit-btn,
-.delete-btn{
-    border:none;
-    background:none;
-    cursor:pointer;
-    font-size:18px;
-    margin:0 4px;
+.delete-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 700;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.edit-btn {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.delete-btn {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.edit-btn:hover {
+  background: #dbeafe;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+}
+
+@media (min-width: 600px) {
+  .students-page {
+    padding: 32px 24px 44px;
+  }
+
+  .students-card {
+    padding: 24px;
+  }
+
+  .student-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .student-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 1px solid #dbe3ee;
+    border-radius: 12px;
+  }
+
+  .student-table thead {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .student-table th {
+    padding: 12px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    text-align: left;
+    background: #2563eb;
+  }
+
+  .student-table tr {
+    display: table-row;
+    overflow: visible;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .student-table tbody tr:hover {
+    background: #f8fafc;
+  }
+
+  .student-table td {
+    display: table-cell;
+    padding: 14px 12px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .student-table td + td {
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .student-table td::before {
+    display: none;
+  }
+
+  .student-table td.student-actions {
+    display: flex;
+    gap: 8px;
+    min-width: 160px;
+    padding: 10px 12px;
+    border-top: 1px solid #e5e7eb;
+  }
+}
+
+@media (min-width: 900px) {
+  .students-page {
+    padding: 44px 32px 56px;
+  }
+
+  .students-header {
+    margin-bottom: 20px;
+  }
+
+  .students-header h2 {
+    font-size: 1.9rem;
+  }
+
+  .students-card {
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  .student-form {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  }
+
+  .student-form > button {
+    width: auto;
+    min-width: 148px;
+  }
+
+  .student-table th,
+  .student-table td {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
 }

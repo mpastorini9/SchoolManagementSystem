@@ -3,7 +3,6 @@ import { getStudents, createStudent, getCourses } from "../services/api";
 import "./Students.css";
 
 export default function Students() {
-
   // Lista de alumnos
   const [students, setStudents] = useState([]);
 
@@ -43,7 +42,6 @@ export default function Students() {
 
   // Crear alumno
   const handleCreate = async () => {
-
     if (!firstName || !lastName) return;
 
     const newStudent = {
@@ -67,80 +65,104 @@ export default function Students() {
   };
 
   return (
-    <div className="card">
+    <main className="students-page">
+      <header className="students-header">
+        <p className="students-eyebrow">Gestión académica</p>
+        <h2>Alumnos</h2>
+        <p>Registrá alumnos y consultá el listado asignado a cada curso.</p>
+      </header>
 
-      <h2>Alumnos</h2>
+      <section className="students-card" aria-label="Gestión de alumnos">
+        <div className="students-section-header">
+          <h3>Nuevo alumno</h3>
+          <p>Completá los datos para registrarlo en un curso.</p>
+        </div>
 
-      <div className="student-form">
+        <div className="student-form">
+          <div className="student-field">
+            <label htmlFor="student-first-name">Nombre</label>
+            <input
+              id="student-first-name"
+              placeholder="Nombre"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+          </div>
 
-        <input
-          placeholder="Nombre"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
+          <div className="student-field">
+            <label htmlFor="student-last-name">Apellido</label>
+            <input
+              id="student-last-name"
+              placeholder="Apellido"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </div>
 
-        <input
-          placeholder="Apellido"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
-
-        <select
-          value={courseId}
-          onChange={(e) => setCourseId(Number(e.target.value))}
-        >
-          {courses.map((course) => (
-            <option
-              key={course.id}
-              value={course.id}
+          <div className="student-field">
+            <label htmlFor="student-course">Curso</label>
+            <select
+              id="student-course"
+              value={courseId}
+              onChange={(e) => setCourseId(Number(e.target.value))}
             >
-              {course.name}
-            </option>
-          ))}
-        </select>
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <button onClick={handleCreate}>
-          Crear alumno
-        </button>
+          <button type="button" onClick={handleCreate}>
+            Crear alumno
+          </button>
+        </div>
 
-      </div>
+        <section className="students-list" aria-labelledby="students-list-title">
+          <div className="students-section-header students-section-header--list">
+            <h3 id="students-list-title">Listado de alumnos</h3>
+            <p>{students.length} registrados</p>
+          </div>
 
-      <table className="student-table">
+          <table className="student-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Curso</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
 
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Apellido</th>
-            <th>Curso</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          {students.map((s) => (
-
-            <tr key={s.id}>
-
-              <td>{s.firstName}</td>
-
-              <td>{s.lastName}</td>
-
-              <td>{s.course?.name}</td>
-
-              <td>
-                <button className="edit-btn">✏️</button>
-                <button className="delete-btn">🗑️</button>
-              </td>
-
-            </tr>
-
-          ))}
-
-        </tbody>
-
-      </table>
-
-    </div>
+            <tbody>
+              {students.map((s) => (
+                <tr key={s.id}>
+                  <td data-label="Nombre">{s.firstName}</td>
+                  <td data-label="Apellido">{s.lastName}</td>
+                  <td data-label="Curso">{s.course?.name}</td>
+                  <td className="student-actions" data-label="Acciones">
+                    <button
+                      type="button"
+                      className="edit-btn"
+                      aria-label={`Editar a ${s.firstName} ${s.lastName}`}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      className="delete-btn"
+                      aria-label={`Eliminar a ${s.firstName} ${s.lastName}`}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      </section>
+    </main>
   );
 }
