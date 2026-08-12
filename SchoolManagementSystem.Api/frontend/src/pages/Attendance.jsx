@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCourses, getStudents, takeAttendance } from "../services/api";
+import "./Attendance.css";
 
 export default function Attendance() {
   const [courses, setCourses] = useState([]);
@@ -104,70 +105,106 @@ export default function Attendance() {
   };
 
   return (
-    <div>
-      <h2>Tomar asistencia</h2>
+    <main className="attendance-page">
+      <header className="attendance-header">
+        <p className="attendance-eyebrow">Asistencia diaria</p>
+        <h2>Tomar asistencia</h2>
+        <p>Seleccioná el curso y la fecha, luego marcá únicamente a los alumnos ausentes.</p>
+      </header>
 
-      <label htmlFor="course">Curso</label>
-      <select
-        id="course"
-        value={selectedCourseId}
-        onChange={handleCourseChange}
-        disabled={isLoading}
-      >
-        <option value="">Seleccionar curso</option>
-        {courses.map((course) => (
-          <option key={course.id} value={course.id}>
-            {course.name}
-          </option>
-        ))}
-      </select>
+      <section className="attendance-card" aria-label="Registro de asistencia">
+        <div className="attendance-fields">
+          <div className="attendance-field">
+            <label htmlFor="course">Curso</label>
+            <select
+              id="course"
+              value={selectedCourseId}
+              onChange={handleCourseChange}
+              disabled={isLoading}
+            >
+              <option value="">Seleccionar curso</option>
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      <label htmlFor="attendance-date">Fecha</label>
-      <input
-        id="attendance-date"
-        type="date"
-        value={selectedDate}
-        onChange={handleDateChange}
-        disabled={isLoading}
-      />
+          <div className="attendance-field">
+            <label htmlFor="attendance-date">Fecha</label>
+            <input
+              id="attendance-date"
+              type="date"
+              value={selectedDate}
+              onChange={handleDateChange}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
 
-      {isLoading && <p>Cargando cursos y alumnos...</p>}
+        {isLoading && <p className="attendance-state">Cargando cursos y alumnos...</p>}
 
-      {loadError && <p role="alert">{loadError}</p>}
+        {loadError && <p className="attendance-feedback attendance-feedback--error" role="alert">{loadError}</p>}
 
-      {!isLoading && !loadError && !selectedCourseId && (
-        <p>Seleccioná un curso para ver los alumnos.</p>
-      )}
+        {!isLoading && !loadError && !selectedCourseId && (
+          <p className="attendance-state">Seleccioná un curso para ver los alumnos.</p>
+        )}
 
-      {!isLoading && !loadError && selectedCourseId && selectedCourseStudents.length === 0 && (
-        <p>No hay alumnos asignados a este curso.</p>
-      )}
+        {!isLoading && !loadError && selectedCourseId && selectedCourseStudents.length === 0 && (
+          <p className="attendance-state">No hay alumnos asignados a este curso.</p>
+        )}
 
-      {!isLoading && !loadError && selectedCourseStudents.map((student) => (
-        <label key={student.id}>
-          <span>{student.firstName} {student.lastName}</span>
-          <input
-            type="checkbox"
-            checked={absentStudents.includes(student.id)}
-            onChange={() => toggleStudent(student.id)}
-          />
-          Ausente
-        </label>
-      ))}
+        {!isLoading && !loadError && selectedCourseStudents.length > 0 && (
+          <section className="attendance-roster" aria-labelledby="attendance-roster-title">
+            <div className="attendance-roster-header">
+              <h3 id="attendance-roster-title">Alumnos</h3>
+              <p>Marcá solo las ausencias.</p>
+            </div>
 
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={isLoading || Boolean(loadError) || isSubmitting}
-      >
-        {isSubmitting ? "Guardando asistencia..." : "Guardar asistencia"}
-      </button>
+            <div className="attendance-student-list">
+              {selectedCourseStudents.map((student) => {
+                const isAbsent = absentStudents.includes(student.id);
 
-      {feedback && (
-        <p role={feedback.type === "error" ? "alert" : "status"}>
-          {feedback.message}
-        </p>
-      )}
-    </div>
+                return (
+                  <button
+                    key={student.id}
+                    type="button"
+                    className={`attendance-student${isAbsent ? " attendance-student--absent" : ""}`}
+                    onClick={() => toggleStudent(student.id)}
+                    aria-pressed={isAbsent}
+                  >
+                    <span className="attendance-student-name">{student.firstName} {student.lastName}</span>
+                    <span className="attendance-student-status">
+                      {isAbsent ? "Ausente" : "Presente"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        <div className="attendance-actions">
+          <button
+            type="button"
+            className="attendance-save-button"
+            onClick={handleSave}
+            disabled={isLoading || Boolean(loadError) || isSubmitting}
+          >
+            {isSubmitting ? "Guardando asistencia..." : "Guardar asistencia"}
+          </button>
+        </div>
+
+        {feedback && (
+          <p
+            className={`attendance-feedback attendance-feedback--${feedback.type}`}
+            role={feedback.type === "error" ? "alert" : "status"}
+          >
+            {feedback.message}
+          </p>
+        )}
+      </section>
+    </main>
   );
 }

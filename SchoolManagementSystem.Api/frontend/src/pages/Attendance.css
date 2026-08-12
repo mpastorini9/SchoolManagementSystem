@@ -1,0 +1,288 @@
+.attendance-page,
+.attendance-page * {
+  box-sizing: border-box;
+}
+
+.attendance-page {
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 20px 12px 32px;
+  color: #1f2937;
+}
+
+.attendance-header {
+  margin-bottom: 16px;
+}
+
+.attendance-eyebrow {
+  margin: 0 0 6px;
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.attendance-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.6rem;
+}
+
+.attendance-header p:last-child {
+  margin: 8px 0 0;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.attendance-card {
+  min-width: 0;
+  padding: 16px 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.attendance-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.attendance-field {
+  min-width: 0;
+}
+
+.attendance-field label {
+  display: block;
+  margin-bottom: 7px;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.attendance-field select,
+.attendance-field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  color: #111827;
+  font: inherit;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+}
+
+.attendance-field input {
+  padding-right: 8px;
+}
+
+.attendance-field select:focus-visible,
+.attendance-field input:focus-visible,
+.attendance-student:focus-visible,
+.attendance-save-button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 2px;
+}
+
+.attendance-state {
+  margin: 16px 0 0;
+  padding: 12px;
+  color: #475569;
+  line-height: 1.5;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.attendance-roster {
+  margin-top: 20px;
+}
+
+.attendance-roster-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.attendance-roster-header h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 1rem;
+}
+
+.attendance-roster-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.attendance-student-list {
+  display: grid;
+  gap: 10px;
+}
+
+.attendance-student {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 58px;
+  padding: 12px;
+  color: #1f2937;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.attendance-student:hover {
+  background: #f8fafc;
+  border-color: #93c5fd;
+}
+
+.attendance-student:active {
+  transform: scale(0.99);
+}
+
+.attendance-student--absent {
+  color: #9f1239;
+  background: #fff1f2;
+  border-color: #fda4af;
+}
+
+.attendance-student--absent:hover {
+  background: #ffe4e6;
+  border-color: #fb7185;
+}
+
+.attendance-student-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.attendance-student-status {
+  padding: 5px 8px;
+  color: #166534;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #dcfce7;
+  border-radius: 999px;
+}
+
+.attendance-student--absent .attendance-student-status {
+  color: #9f1239;
+  background: #ffe4e6;
+}
+
+.attendance-actions {
+  margin-top: 20px;
+}
+
+.attendance-save-button {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 18px;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  background: #2563eb;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.attendance-save-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.attendance-save-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.attendance-save-button:disabled {
+  color: #94a3b8;
+  background: #e2e8f0;
+  cursor: not-allowed;
+}
+
+.attendance-feedback {
+  margin: 16px 0 0;
+  padding: 12px;
+  line-height: 1.45;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+
+.attendance-feedback--success {
+  color: #166534;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.attendance-feedback--error {
+  color: #991b1b;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+@media (min-width: 600px) {
+  .attendance-page {
+    padding: 32px 24px 44px;
+  }
+
+  .attendance-card {
+    padding: 24px;
+  }
+
+  .attendance-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .attendance-roster-header {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .attendance-student {
+    padding: 12px 14px;
+  }
+
+  .attendance-student-status {
+    padding: 5px 9px;
+  }
+
+  .attendance-actions {
+    margin-top: 24px;
+  }
+}
+
+@media (min-width: 900px) {
+  .attendance-page {
+    padding: 44px 32px 56px;
+  }
+
+  .attendance-header {
+    margin-bottom: 20px;
+  }
+
+  .attendance-header h2 {
+    font-size: 1.9rem;
+  }
+
+  .attendance-card {
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+}
