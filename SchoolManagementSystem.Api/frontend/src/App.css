@@ -23,7 +23,8 @@ body {
   background-color: white;
   padding: 10px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 10px;
   border-bottom: 1px solid #ddd;
 }
@@ -42,9 +43,7 @@ body {
 }
 
 .app-content {
-  max-width: 1000px;
-  margin: 30px auto;
-  padding: 20px;
+  margin: 0 auto;
 }
 
 .form-card {

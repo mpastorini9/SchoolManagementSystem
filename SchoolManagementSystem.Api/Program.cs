@@ -47,6 +47,12 @@ using (var scope = app.Services.CreateScope())
             new Course { Id = 3, Name = "3°B" }
         );
 
+        context.Subjects.AddRange(
+            new Subject { Id = 1, Name = "Matematica" },
+            new Subject { Id = 2, Name = "Lengua" },
+            new Subject { Id = 3, Name = "Ciencias" }
+        );
+
         context.Students.AddRange(
             new Student
             {
