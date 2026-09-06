@@ -2,11 +2,19 @@
 
 ## Purpose
 
-The Attendance module is responsible for recording, managing, and tracking student attendance.
+The Attendance module is responsible for recording, managing, and tracking student and teacher attendance.
 
 It provides schools with a reliable and efficient way to maintain daily attendance records while ensuring consistency, accuracy, and traceability.
 
 Attendance is considered one of the core business capabilities of SchoolManagementSystem.
+
+---
+
+# Current Implementation
+
+Student Attendance V1 remains recorded per student and course. Teacher attendance is recorded per scheduled teaching activity, which supplies the teacher, course, subject, weekday, and taught hours.
+
+A teacher attendance record stores the activity date and a Present or Absent status. The date must match the activity weekday, and the same activity cannot be recorded twice for the same date.
 
 ---
 

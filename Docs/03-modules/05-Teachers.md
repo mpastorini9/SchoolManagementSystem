@@ -10,6 +10,14 @@ Every teaching activity within the institution depends on this module.
 
 ---
 
+# Current Implementation
+
+Teachers support create, list, update, and logical deletion. Only active teachers are listed; a deletion preserves the record for historical consistency.
+
+Teaching activities connect an active teacher, a course, a subject, a weekday, and a start/end time. Attendance records belong to the Attendance module and reference these scheduled activities.
+
+---
+
 # Responsibilities
 
 The Teachers module is responsible for:

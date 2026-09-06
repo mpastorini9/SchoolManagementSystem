@@ -63,6 +63,9 @@ Attendance records provide the historical information required for academic trac
 The platform is expected to evolve with additional business entities, including:
 
 - Teacher
+- Subject
+- Teacher Schedule
+- Teacher Attendance
 - Parent
 - Student Record
 - Billing
