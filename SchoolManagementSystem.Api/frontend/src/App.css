@@ -1,91 +1,852 @@
+/* =========================================================
+   ORO OCAMPO — GLOBAL VISUAL SYSTEM
+   SchoolManagementSystem
+   ========================================================= */
+
+:root {
+  /* ---------------------------------------------------------
+     Brand colors
+     --------------------------------------------------------- */
+
+  --school-navy: #17285f;
+  --school-navy-dark: #101b43;
+  --school-blue: #243d91;
+  --school-blue-light: #3154b5;
+  --school-sky: #8fc5ff;
+
+  --school-red: #ef101c;
+  --school-red-dark: #d90d18;
+  --school-red-soft: #fff0f1;
+
+  /* ---------------------------------------------------------
+     Surfaces
+     --------------------------------------------------------- */
+
+  --school-white: #ffffff;
+  --school-background: #f5f7fb;
+  --school-surface: #ffffff;
+  --school-surface-soft: #f8f9fc;
+
+  /* ---------------------------------------------------------
+     Text
+     --------------------------------------------------------- */
+
+  --school-text: #17234d;
+  --school-text-secondary: #5e6782;
+  --school-text-muted: #7c8499;
+  --school-text-on-brand: #ffffff;
+
+  /* ---------------------------------------------------------
+     Borders
+     --------------------------------------------------------- */
+
+  --school-border: #e1e5ee;
+  --school-border-light: #edf0f5;
+
+  /* ---------------------------------------------------------
+     Semantic colors
+     --------------------------------------------------------- */
+
+  --school-success: #168653;
+  --school-success-soft: #edf9f3;
+
+  --school-warning: #c98600;
+  --school-warning-soft: #fff8e8;
+
+  --school-danger: #d92d3a;
+  --school-danger-soft: #fff0f1;
+
+  /* ---------------------------------------------------------
+     Radius
+     --------------------------------------------------------- */
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* ---------------------------------------------------------
+     Shadows
+     --------------------------------------------------------- */
+
+  --shadow-sm: 0 1px 4px rgba(17, 29, 73, 0.06);
+  --shadow-md: 0 6px 18px rgba(17, 29, 73, 0.08);
+  --shadow-lg: 0 12px 30px rgba(17, 29, 73, 0.1);
+
+  /* ---------------------------------------------------------
+     Layout
+     --------------------------------------------------------- */
+
+  --content-width: 1200px;
+}
+
+/* =========================================================
+   BASE
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background-color: #f3f4f6;
+
+  font-family:
+    Inter,
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  background-color: var(--school-background);
+  color: var(--school-text);
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   GLOBAL LAYOUT
+   ========================================================= */
 
 .app-container {
   min-height: 100vh;
+  background-color: var(--school-background);
 }
 
+.app-content {
+  width: 100%;
+  max-width: var(--content-width);
+
+  margin: 0 auto;
+
+  padding: 32px 24px 48px;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
 .app-header {
-  background-color: #87a9f1;
-  padding: 20px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--school-navy-dark) 0%,
+      var(--school-navy) 55%,
+      var(--school-blue) 100%
+    );
+
+  padding: 26px 32px;
+
   text-align: center;
+
+  border-bottom: 3px solid var(--school-red);
+
+  box-shadow: var(--shadow-md);
 }
 
 .app-header h1 {
   margin: 0;
-  color: white;
+
+  color: var(--school-text-on-brand);
+
+  font-size: 1.8rem;
+  font-weight: 700;
+
+  letter-spacing: -0.02em;
 }
 
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
 .app-nav {
-  background-color: white;
-  padding: 10px;
+  background-color: var(--school-white);
+
+  padding: 12px 24px;
+
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  border-bottom: 1px solid #ddd;
+
+  gap: 8px;
+
+  border-bottom: 1px solid var(--school-border);
+
+  box-shadow: var(--shadow-sm);
+
+  position: relative;
+  z-index: 10;
 }
 
 .app-nav button {
-  background-color: #2563eb;
-  color: white;
+  position: relative;
+
+  background-color: transparent;
+
+  color: var(--school-text-secondary);
+
   border: none;
-  padding: 10px 18px;
-  border-radius: 6px;
-  cursor: pointer;
+
+  padding: 10px 16px;
+
+  border-radius: var(--radius-sm);
+
+  font-size: 0.92rem;
+  font-weight: 600;
+
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.app-nav button::after {
+  content: "";
+
+  position: absolute;
+
+  left: 14px;
+  right: 14px;
+  bottom: 3px;
+
+  height: 3px;
+
+  background-color: var(--school-red);
+
+  border-radius: var(--radius-pill);
+
+  transform: scaleX(0);
+  transform-origin: center;
+
+  transition: transform 0.2s ease;
 }
 
 .app-nav button:hover {
-  background-color: #1d4ed8;
+  color: var(--school-navy);
+  background-color: var(--school-surface-soft);
 }
 
-.app-content {
-  margin: 0 auto;
+.app-nav button:hover::after {
+  transform: scaleX(1);
 }
+
+.app-nav button:active {
+  transform: translateY(1px);
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.school-button {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  min-height: 42px;
+
+  padding: 10px 18px;
+
+  border: 1px solid transparent;
+
+  border-radius: var(--radius-sm);
+
+  font-size: 0.92rem;
+  font-weight: 700;
+
+  line-height: 1;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.school-button:active {
+  transform: translateY(1px);
+}
+
+.school-button:disabled {
+  opacity: 0.55;
+}
+
+/* Primary */
+
+.school-button-primary {
+  background-color: var(--school-red);
+  color: var(--school-white);
+}
+
+.school-button-primary:hover {
+  background-color: var(--school-red-dark);
+
+  box-shadow:
+    0 5px 14px rgba(239, 16, 28, 0.22);
+}
+
+/* Secondary */
+
+.school-button-secondary {
+  background-color: var(--school-white);
+
+  color: var(--school-navy);
+
+  border-color: var(--school-border);
+}
+
+.school-button-secondary:hover {
+  background-color: var(--school-surface-soft);
+
+  border-color: var(--school-blue-light);
+}
+
+/* Blue */
+
+.school-button-blue {
+  background-color: var(--school-blue);
+
+  color: var(--school-white);
+}
+
+.school-button-blue:hover {
+  background-color: var(--school-navy);
+
+  box-shadow:
+    0 5px 14px rgba(36, 61, 145, 0.2);
+}
+
+/* Danger */
+
+.school-button-danger {
+  background-color: var(--school-white);
+
+  color: var(--school-danger);
+
+  border-color: #f2c4c8;
+}
+
+.school-button-danger:hover {
+  background-color: var(--school-danger-soft);
+
+  border-color: var(--school-danger);
+}
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.school-card {
+  background-color: var(--school-surface);
+
+  border: 1px solid var(--school-border-light);
+
+  border-radius: var(--radius-lg);
+
+  box-shadow: var(--shadow-sm);
+}
+
+.school-card-elevated {
+  box-shadow: var(--shadow-md);
+}
+
+.school-card-accent {
+  border-left: 4px solid var(--school-red);
+}
+
+/* =========================================================
+   PAGE HEADINGS
+   ========================================================= */
+
+.school-page-header {
+  margin-bottom: 24px;
+}
+
+.school-page-title {
+  margin: 0;
+
+  color: var(--school-navy);
+
+  font-size: 1.8rem;
+  font-weight: 700;
+
+  letter-spacing: -0.025em;
+}
+
+.school-page-subtitle {
+  margin: 8px 0 0;
+
+  color: var(--school-text-secondary);
+
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+/* Red institutional accent */
+
+.school-page-accent {
+  width: 56px;
+  height: 4px;
+
+  margin-top: 12px;
+
+  background-color: var(--school-red);
+
+  border-radius: var(--radius-pill);
+}
+
+/* =========================================================
+   SECTIONS
+   ========================================================= */
+
+.school-section {
+  margin-bottom: 24px;
+}
+
+.school-section-title {
+  margin: 0 0 14px;
+
+  color: var(--school-navy);
+
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.school-section-description {
+  margin: -6px 0 16px;
+
+  color: var(--school-text-secondary);
+
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   FORM CONTROLS
+   ========================================================= */
+
+.school-field {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.school-label {
+  color: var(--school-text);
+
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.school-input,
+.school-select,
+.school-textarea {
+  width: 100%;
+
+  padding: 11px 13px;
+
+  background-color: var(--school-white);
+
+  color: var(--school-text);
+
+  border: 1px solid var(--school-border);
+
+  border-radius: var(--radius-sm);
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.school-input::placeholder,
+.school-textarea::placeholder {
+  color: var(--school-text-muted);
+}
+
+.school-input:focus,
+.school-select:focus,
+.school-textarea:focus {
+  border-color: var(--school-blue-light);
+
+  box-shadow:
+    0 0 0 3px rgba(49, 84, 181, 0.12);
+}
+
+.school-input:disabled,
+.school-select:disabled,
+.school-textarea:disabled {
+  background-color: var(--school-surface-soft);
+
+  color: var(--school-text-muted);
+
+  cursor: not-allowed;
+}
+
+.school-textarea {
+  min-height: 120px;
+
+  resize: vertical;
+
+  line-height: 1.5;
+}
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.school-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  min-height: 26px;
+
+  padding: 4px 10px;
+
+  border-radius: var(--radius-pill);
+
+  font-size: 0.76rem;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+.school-badge-primary {
+  background-color: rgba(36, 61, 145, 0.1);
+
+  color: var(--school-blue);
+}
+
+.school-badge-red {
+  background-color: var(--school-red-soft);
+
+  color: var(--school-red-dark);
+}
+
+.school-badge-success {
+  background-color: var(--school-success-soft);
+
+  color: var(--school-success);
+}
+
+.school-badge-warning {
+  background-color: var(--school-warning-soft);
+
+  color: var(--school-warning);
+}
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+.school-alert {
+  padding: 12px 14px;
+
+  border-radius: var(--radius-md);
+
+  border: 1px solid transparent;
+
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.school-alert-info {
+  background-color: rgba(49, 84, 181, 0.07);
+
+  color: var(--school-blue);
+
+  border-color: rgba(49, 84, 181, 0.16);
+}
+
+.school-alert-success {
+  background-color: var(--school-success-soft);
+
+  color: var(--school-success);
+
+  border-color: rgba(22, 134, 83, 0.18);
+}
+
+.school-alert-warning {
+  background-color: var(--school-warning-soft);
+
+  color: var(--school-warning);
+
+  border-color: rgba(201, 134, 0, 0.18);
+}
+
+.school-alert-danger {
+  background-color: var(--school-danger-soft);
+
+  color: var(--school-danger);
+
+  border-color: rgba(217, 45, 58, 0.18);
+}
+
+/* =========================================================
+   EMPTY STATES
+   ========================================================= */
+
+.school-empty {
+  padding: 40px 24px;
+
+  text-align: center;
+
+  background-color: var(--school-surface);
+
+  border: 1px dashed var(--school-border);
+
+  border-radius: var(--radius-lg);
+
+  color: var(--school-text-secondary);
+}
+
+.school-empty-title {
+  margin: 0 0 6px;
+
+  color: var(--school-navy);
+
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.school-empty-text {
+  margin: 0;
+
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   GENERIC FORM CARD
+   Legacy compatibility
+   ========================================================= */
 
 .form-card {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: var(--school-surface);
+
+  padding: 24px;
+
+  border: 1px solid var(--school-border-light);
+
+  border-radius: var(--radius-lg);
+
+  box-shadow: var(--shadow-md);
 }
+
+/* =========================================================
+   LEGACY STUDENT FORM
+   Kept here temporarily so existing Students.jsx
+   continues to work without JSX changes.
+   ========================================================= */
 
 .student-form {
   display: flex;
+
   gap: 10px;
+
   flex-wrap: wrap;
 }
 
 .student-form input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 11px 13px;
+
+  background-color: var(--school-white);
+
+  color: var(--school-text);
+
+  border: 1px solid var(--school-border);
+
+  border-radius: var(--radius-sm);
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.student-form input:focus {
+  border-color: var(--school-blue-light);
+
+  box-shadow:
+    0 0 0 3px rgba(49, 84, 181, 0.12);
 }
 
 .student-form button {
-  background-color: #16a34a;
-  color: white;
+  background-color: var(--school-red);
+
+  color: var(--school-white);
+
   border: none;
-  padding: 10px 18px;
-  border-radius: 6px;
-  cursor: pointer;
+
+  padding: 11px 20px;
+
+  border-radius: var(--radius-sm);
+
+  font-weight: 700;
+
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .student-form button:hover {
-  background-color: #15803d;
+  background-color: var(--school-red-dark);
+
+  box-shadow:
+    0 4px 12px rgba(239, 16, 28, 0.22);
 }
+
+.student-form button:active {
+  transform: translateY(1px);
+}
+
+/* =========================================================
+   LEGACY STUDENTS
+   ========================================================= */
 
 .students-list {
   margin-top: 25px;
 }
 
 .student-card {
-  background: white;
-  padding: 12px;
+  background-color: var(--school-white);
+
+  padding: 16px 18px;
+
   margin-bottom: 10px;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+
+  border: 1px solid var(--school-border-light);
+
+  border-left: 4px solid var(--school-red);
+
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-sm);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.student-card:hover {
+  transform: translateY(-1px);
+
+  box-shadow: var(--shadow-md);
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 22px 18px;
+  }
+
+  .app-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .app-nav {
+    justify-content: flex-start;
+
+    padding: 10px 14px;
+
+    gap: 5px;
+
+    overflow-x: auto;
+
+    scrollbar-width: thin;
+  }
+
+  .app-nav button {
+    flex: 0 0 auto;
+
+    padding: 9px 13px;
+
+    font-size: 0.86rem;
+  }
+
+  .app-content {
+    padding: 24px 16px 40px;
+  }
+
+  .school-page-title {
+    font-size: 1.5rem;
+  }
+
+  .form-card {
+    padding: 18px;
+  }
+
+  .student-form {
+    flex-direction: column;
+  }
+
+  .student-form input,
+  .student-form button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 20px 14px;
+  }
+
+  .app-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .app-nav {
+    padding: 8px 10px;
+  }
+
+  .app-nav button {
+    padding: 8px 11px;
+  }
+
+  .app-content {
+    padding: 20px 12px 32px;
+  }
+
+  .school-page-title {
+    font-size: 1.35rem;
+  }
+
+  .school-button {
+    width: 100%;
+  }
 }

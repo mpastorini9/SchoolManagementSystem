@@ -155,3 +155,70 @@ export function confirmImport(importData) {
     body: JSON.stringify(importData)
   });
 }
+
+export function getActivities({ teacherId, courseId, subjectId, includeInactive = false } = {}) {
+  const params = new URLSearchParams();
+
+  if (teacherId) params.append("teacherId", teacherId);
+  if (courseId) params.append("courseId", courseId);
+  if (subjectId) params.append("subjectId", subjectId);
+
+  params.append("includeInactive", includeInactive);
+
+  const query = params.toString();
+
+  return requestJson(
+    `${API_URL}/Activity${query ? `?${query}` : ""}`
+  );
+}
+
+export function getActivity(id) {
+  return requestJson(`${API_URL}/Activity/${id}`);
+}
+
+export function createActivity(activity) {
+  return requestJson(`${API_URL}/Activity`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(activity)
+  });
+}
+
+export function updateActivity(id, activity) {
+  return requestJson(`${API_URL}/Activity/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(activity)
+  });
+}
+
+export function publishActivity(id) {
+  return requestJson(`${API_URL}/Activity/${id}/publish`, {
+    method: "POST"
+  });
+}
+
+export function getActivityStudents(id) {
+  return requestJson(`${API_URL}/Activity/${id}/students`);
+}
+
+export function getActivityMaterials(id) {
+  return requestJson(`${API_URL}/Activity/${id}/materials`);
+}
+
+export function addActivityMaterial(id, material) {
+  return requestJson(`${API_URL}/Activity/${id}/materials`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(material)
+  });
+}
+
+export function deleteActivityMaterial(activityId, materialId) {
+  return requestJson(
+    `${API_URL}/Activity/${activityId}/materials/${materialId}`,
+    {
+      method: "DELETE"
+    }
+  );
+}

@@ -16,5 +16,24 @@ namespace SchoolManagementSystem.Api.Data
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<TeacherSchedule> TeacherSchedules { get; set; }
         public DbSet<TeacherAttendance> TeacherAttendances { get; set; }
+
+        public DbSet<Activity> Activities { get; set; }
+        public DbSet<ActivityMaterial> ActivityMaterials { get; set; }
+        public DbSet<ActivityStudent> ActivityStudents { get; set; }
+        public DbSet<StudentSubmission> StudentSubmissions { get; set; }
+        public DbSet<SubmissionRevision> SubmissionRevisions { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<ActivityStudent>()
+                .HasIndex(item => new { item.ActivityId, item.StudentId })
+                .IsUnique();
+
+            modelBuilder.Entity<StudentSubmission>()
+                .HasIndex(item => item.ActivityStudentId)
+                .IsUnique();
+        }
     }
 }
