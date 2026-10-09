@@ -1,5 +1,6 @@
 using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.Models;
+using SchoolManagementSystem.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,8 @@ builder.Services
 
 builder.Services.AddDbContext<SchoolContext>(options =>
     options.UseInMemoryDatabase("SchoolDb"));
+
+builder.Services.AddSingleton<ActivityFileStorage>();
 
 
 // ==========================

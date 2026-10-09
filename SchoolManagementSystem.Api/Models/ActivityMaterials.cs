@@ -15,6 +15,12 @@ namespace SchoolManagementSystem.Api.Models
 
         public string? Url { get; set; }
 
+        public string? FileName { get; set; }
+
+        public string? ContentType { get; set; }
+
+        public long? FileSize { get; set; }
+
         public string? StorageKey { get; set; }
 
         public DateTime CreatedAt { get; set; }

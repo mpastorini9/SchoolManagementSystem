@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   getActivities,
   getActivity,
+  getActivityMaterials,
   getStudents,
   getCourses,
   getTeachers,
@@ -9,7 +10,11 @@ import {
   getTeacherSchedules,
   createActivity,
   updateActivity,
-  publishActivity
+  publishActivity,
+  addActivityMaterial,
+  uploadActivityMaterialFile,
+  deleteActivityMaterial,
+  getActivityMaterialFileUrl
 } from "../services/api";
 import "./Activities.css";
 
@@ -37,6 +42,13 @@ function Activities() {
 
   const [form, setForm] = useState(initialForm);
   const [currentDraft, setCurrentDraft] = useState(null);
+  const [savedMaterials, setSavedMaterials] = useState([]);
+  const [pendingMaterials, setPendingMaterials] = useState([]);
+  const [materialType, setMaterialType] = useState("File");
+  const [materialName, setMaterialName] = useState("");
+  const [materialDescription, setMaterialDescription] = useState("");
+  const [materialUrl, setMaterialUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [loadingFormData, setLoadingFormData] = useState(false);
@@ -94,6 +106,9 @@ function Activities() {
 
       setForm(initialForm);
       setCurrentDraft(null);
+      setSavedMaterials([]);
+      setPendingMaterials([]);
+      resetMaterialForm();
     } catch (err) {
       setError(getActivityErrorMessage(err, "No se pudieron cargar los datos necesarios."));
     } finally {
@@ -109,8 +124,9 @@ function Activities() {
       setSuccess("");
       setLoadingFormData(true);
 
-      const [activity, teachersData, coursesData, subjectsData, studentsData, schedulesData] = await Promise.all([
+      const [activity, materialsData, teachersData, coursesData, subjectsData, studentsData, schedulesData] = await Promise.all([
         getActivity(activityId),
+        getActivityMaterials(activityId),
         getTeachers(),
         getCourses(),
         getSubjects(),
@@ -123,6 +139,9 @@ function Activities() {
       setSubjects(subjectsData);
       setStudents(studentsData);
       setTeacherSchedules(schedulesData);
+      setSavedMaterials(materialsData);
+      setPendingMaterials([]);
+      resetMaterialForm();
       setForm({
         teacherId: String(activity.teacherId),
         courseId: String(activity.courseId),
@@ -147,8 +166,96 @@ function Activities() {
     setShowReview(false);
     setForm(initialForm);
     setCurrentDraft(null);
+    setSavedMaterials([]);
+    setPendingMaterials([]);
+    resetMaterialForm();
     setError("");
     if (hadSavedDraft) loadActivities();
+  }
+
+  function resetMaterialForm() {
+    setMaterialType("File");
+    setMaterialName("");
+    setMaterialDescription("");
+    setMaterialUrl("");
+    setSelectedFile(null);
+  }
+
+  function handleAddPendingMaterial() {
+    setError("");
+
+    if (materialType === "File") {
+      if (!selectedFile) {
+        setError("Seleccioná un archivo antes de agregarlo.");
+        return;
+      }
+      if (selectedFile.size === 0) {
+        setError("El archivo seleccionado está vacío.");
+        return;
+      }
+      if (selectedFile.size > 25 * 1024 * 1024) {
+        setError("El archivo supera el tamaño máximo de 25 MB.");
+        return;
+      }
+
+      setPendingMaterials((items) => [
+        ...items,
+        {
+          clientId: crypto.randomUUID(),
+          type: "File",
+          name: selectedFile.name,
+          file: selectedFile,
+          description: materialDescription.trim()
+        }
+      ]);
+    } else {
+      if (!materialName.trim()) {
+        setError("Ingresá un nombre para el material.");
+        return;
+      }
+
+      let url;
+      try {
+        url = new URL(materialUrl.trim());
+      } catch {
+        setError("Ingresá una URL absoluta válida que comience con http:// o https://.");
+        return;
+      }
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        setError("Solo se permiten direcciones web HTTP o HTTPS.");
+        return;
+      }
+
+      setPendingMaterials((items) => [
+        ...items,
+        {
+          clientId: crypto.randomUUID(),
+          type: materialType,
+          name: materialName.trim(),
+          description: materialDescription.trim(),
+          url: url.href
+        }
+      ]);
+    }
+
+    resetMaterialForm();
+  }
+
+  function removePendingMaterial(clientId) {
+    setPendingMaterials((items) => items.filter((item) => item.clientId !== clientId));
+  }
+
+  async function removeSavedMaterial(materialId) {
+    if (!currentDraft) return;
+
+    try {
+      setError("");
+      await deleteActivityMaterial(currentDraft.id, materialId);
+      setSavedMaterials((items) => items.filter((item) => item.id !== materialId));
+      setSuccess("Se quitó el material del borrador.");
+    } catch (err) {
+      setError(getActivityErrorMessage(err, "No se pudo quitar el material."));
+    }
   }
 
   function handleChange(event) {
@@ -374,6 +481,9 @@ function Activities() {
       return;
     }
 
+    let savedDuringRequest = [];
+    let remainingPending = [...pendingMaterials];
+
     try {
       setSavingDraft(true);
       setError("");
@@ -402,8 +512,28 @@ function Activities() {
       }
 
       setCurrentDraft(draft);
+      for (const material of pendingMaterials) {
+        const savedMaterial = material.type === "File"
+          ? await uploadActivityMaterialFile(draft.id, material.file, material.description)
+          : await addActivityMaterial(draft.id, {
+              type: material.type,
+              name: material.name,
+              description: material.description || null,
+              url: material.url
+            });
+
+        savedDuringRequest = [...savedDuringRequest, savedMaterial];
+        remainingPending = remainingPending.filter((item) => item.clientId !== material.clientId);
+      }
+
+      setSavedMaterials((items) => [...items, ...savedDuringRequest]);
+      setPendingMaterials(remainingPending);
       setShowReview(true);
     } catch (err) {
+      if (savedDuringRequest.length > 0) {
+        setSavedMaterials((items) => [...items, ...savedDuringRequest]);
+        setPendingMaterials(remainingPending);
+      }
       setError(getActivityErrorMessage(err, "No se pudo guardar la actividad."));
     } finally {
       setSavingDraft(false);
@@ -427,6 +557,9 @@ function Activities() {
       setShowForm(false);
       setCurrentDraft(null);
       setForm(initialForm);
+      setSavedMaterials([]);
+      setPendingMaterials([]);
+      resetMaterialForm();
 
       setSuccess("Actividad publicada correctamente.");
 
@@ -462,6 +595,9 @@ function Activities() {
     if (error.status === 400) {
       return error.message || "Revisá los datos ingresados e intentá nuevamente.";
     }
+    if (error.status === 413) {
+      return "El archivo supera el tamaño máximo permitido de 25 MB.";
+    }
     return error.message || fallback;
   }
 
@@ -480,6 +616,68 @@ function Activities() {
     }
 
     return "Todo el curso";
+  }
+
+  function materialTypeLabel(type) {
+    if (type === 1 || type === "File") return "Archivo";
+    if (type === 2 || type === "Link") return "Enlace";
+    return "Recurso externo";
+  }
+
+  function formatFileSize(size) {
+    if (!Number.isFinite(size)) return "";
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function renderSavedMaterials() {
+    if (savedMaterials.length === 0) {
+      return <p className="activity-materials-empty">Todavía no hay materiales guardados.</p>;
+    }
+
+    return (
+      <div className="activity-materials-list">
+        {savedMaterials.map((material) => (
+          <article className="activity-material-card" key={material.id}>
+            <div className="activity-material-card-content">
+              <strong>{material.name}</strong>
+              <span>{materialTypeLabel(material.type)}</span>
+              {material.description && <p>{material.description}</p>}
+              {material.type === 1 ? (
+                <>
+                  <span>{material.fileName || material.name} · {formatFileSize(material.fileSize)}</span>
+                  {currentDraft && (
+                    <a
+                      className="activity-material-link"
+                      href={getActivityMaterialFileUrl(currentDraft.id, material.id)}
+                      download
+                    >
+                      Descargar archivo
+                    </a>
+                  )}
+                </>
+              ) : (
+                <a className="activity-material-link" href={material.url} target="_blank" rel="noreferrer">
+                  Abrir recurso
+                </a>
+              )}
+              <span>Agregado: {formatDate(material.createdAt)}</span>
+            </div>
+            {currentDraft && (
+              <button
+                type="button"
+                className="activities-button activities-button-secondary"
+                onClick={() => removeSavedMaterial(material.id)}
+                disabled={savingDraft || publishing}
+              >
+                Quitar
+              </button>
+            )}
+          </article>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -832,6 +1030,124 @@ function Activities() {
                 </div>
               </div>
 
+              <div className="activities-form-section">
+                <h4 className="activities-form-section-title">Materiales de la actividad</h4>
+                <p className="activities-materials-help">
+                  Adjuntá archivos o agregá enlaces y recursos externos. Podés incluir varios materiales.
+                </p>
+
+                <div className="activities-form-grid">
+                  <div className="activities-field">
+                    <label htmlFor="materialType">Tipo de material</label>
+                    <select
+                      id="materialType"
+                      value={materialType}
+                      onChange={(event) => setMaterialType(event.target.value)}
+                      disabled={savingDraft}
+                    >
+                      <option value="File">Archivo</option>
+                      <option value="Link">Enlace</option>
+                      <option value="External">Recurso externo</option>
+                    </select>
+                  </div>
+
+                  {materialType === "File" ? (
+                    <div className="activities-field">
+                      <label htmlFor="materialFile">Archivo (máximo 25 MB)</label>
+                      <input
+                        id="materialFile"
+                        key={selectedFile ? selectedFile.name : "empty-file-input"}
+                        type="file"
+                        onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
+                        disabled={savingDraft}
+                      />
+                      {selectedFile && (
+                        <div className="activity-selected-file">
+                          <span>{selectedFile.name} · {formatFileSize(selectedFile.size)}</span>
+                          <button type="button" onClick={() => setSelectedFile(null)} disabled={savingDraft}>
+                            Quitar selección
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="activities-field">
+                      <label htmlFor="materialName">Nombre</label>
+                      <input
+                        id="materialName"
+                        value={materialName}
+                        onChange={(event) => setMaterialName(event.target.value)}
+                        placeholder="Nombre visible para los alumnos"
+                        disabled={savingDraft}
+                      />
+                    </div>
+                  )}
+
+                  {materialType !== "File" && (
+                    <div className="activities-field activities-field-full">
+                      <label htmlFor="materialUrl">URL (HTTP o HTTPS)</label>
+                      <input
+                        id="materialUrl"
+                        type="url"
+                        value={materialUrl}
+                        onChange={(event) => setMaterialUrl(event.target.value)}
+                        placeholder="https://..."
+                        disabled={savingDraft}
+                      />
+                    </div>
+                  )}
+
+                  <div className="activities-field activities-field-full">
+                    <label htmlFor="materialDescription">Descripción (opcional)</label>
+                    <input
+                      id="materialDescription"
+                      value={materialDescription}
+                      onChange={(event) => setMaterialDescription(event.target.value)}
+                      disabled={savingDraft}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="activities-button activities-button-secondary activities-material-add-button"
+                  onClick={handleAddPendingMaterial}
+                  disabled={savingDraft}
+                >
+                  Agregar material
+                </button>
+
+                {pendingMaterials.length > 0 && (
+                  <div className="activity-materials-list">
+                    {pendingMaterials.map((material) => (
+                      <article className="activity-material-card" key={material.clientId}>
+                        <div className="activity-material-card-content">
+                          <strong>{material.name}</strong>
+                          <span>{materialTypeLabel(material.type)} · Pendiente de guardar</span>
+                          {material.type === "File" && (
+                            <span>{formatFileSize(material.file.size)}</span>
+                          )}
+                          {material.url && <span>{material.url}</span>}
+                        </div>
+                        <button
+                          type="button"
+                          className="activities-button activities-button-secondary"
+                          onClick={() => removePendingMaterial(material.clientId)}
+                          disabled={savingDraft}
+                        >
+                          Quitar
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                )}
+
+                <div className="activity-saved-materials">
+                  <h5>Materiales guardados</h5>
+                  {renderSavedMaterials()}
+                </div>
+              </div>
+
               <div className="activities-form-actions">
                 <button
                   type="button"
@@ -911,6 +1227,11 @@ function Activities() {
                     ? `${selectedStudent.firstName} ${selectedStudent.lastName}`
                     : "-"}
               </p>
+            </div>
+
+            <div className="activity-saved-materials">
+              <h4>Materiales adjuntos</h4>
+              {renderSavedMaterials()}
             </div>
 
             <div className="activities-review-actions">

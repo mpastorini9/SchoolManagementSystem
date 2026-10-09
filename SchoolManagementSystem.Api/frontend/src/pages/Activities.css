@@ -54,9 +54,9 @@
 }
 
 .activities-button-primary {
-  background: #1d4ed8;
+  background: #ef101c;
   color: white;
-  box-shadow: 0 4px 10px rgba(29, 78, 216, 0.18);
+  box-shadow: 0 4px 10px rgba(239, 16, 28, 0.18);
 }
 
 .activities-button-secondary {
@@ -338,6 +338,108 @@
 }
 
 /* =========================
+   Activity materials
+   ========================= */
+
+.activities-materials-help {
+  margin: -8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.activities-material-add-button {
+  align-self: flex-start;
+}
+
+.activity-selected-file {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.activity-selected-file button {
+  flex: 0 0 auto;
+  padding: 4px 0;
+  color: #b91c1c;
+  background: transparent;
+  border: 0;
+  font-weight: 600;
+}
+
+.activity-saved-materials {
+  display: grid;
+  gap: 10px;
+}
+
+.activity-saved-materials h4,
+.activity-saved-materials h5 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 15px;
+}
+
+.activity-saved-materials h5 {
+  margin-top: 8px;
+}
+
+.activity-materials-list {
+  display: grid;
+  gap: 10px;
+}
+
+.activity-material-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.activity-material-card-content {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: #64748b;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.activity-material-card-content strong {
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.activity-material-card-content p {
+  margin: 0;
+  color: #475569;
+}
+
+.activity-material-link {
+  width: fit-content;
+  color: #b91c1c;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.activity-materials-empty {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* =========================
    Loading
    ========================= */
 
@@ -392,7 +494,12 @@
   }
 
   .activities-form-actions .activities-button,
-  .activities-review-actions .activities-button {
+  .activities-review-actions .activities-button,
+  .activity-material-card > .activities-button {
     width: 100%;
+  }
+
+  .activity-material-card {
+    flex-direction: column;
   }
 }

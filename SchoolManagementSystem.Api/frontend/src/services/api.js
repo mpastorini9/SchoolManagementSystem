@@ -222,3 +222,18 @@ export function deleteActivityMaterial(activityId, materialId) {
     }
   );
 }
+
+export function uploadActivityMaterialFile(activityId, file, description = "") {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (description.trim()) formData.append("description", description.trim());
+
+  return requestJson(`${API_URL}/Activity/${activityId}/materials/file`, {
+    method: "POST",
+    body: formData
+  });
+}
+
+export function getActivityMaterialFileUrl(activityId, materialId) {
+  return `${API_URL}/Activity/${activityId}/materials/${materialId}/file`;
+}

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.DTOs;
 using SchoolManagementSystem.Api.Models;
+using SchoolManagementSystem.Api.Services;
 
 namespace SchoolManagementSystem.Api.Controllers
 {
@@ -10,11 +11,21 @@ namespace SchoolManagementSystem.Api.Controllers
     [Route("api/[controller]")]
     public class ActivityController : ControllerBase
     {
-        private readonly SchoolContext _context;
+        private const long MaxMaterialFileSize = 25 * 1024 * 1024;
+        private const int MultipartOverhead = 64 * 1024;
 
-        public ActivityController(SchoolContext context)
+        private readonly SchoolContext _context;
+        private readonly ActivityFileStorage _fileStorage;
+        private readonly ILogger<ActivityController> _logger;
+
+        public ActivityController(
+            SchoolContext context,
+            ActivityFileStorage fileStorage,
+            ILogger<ActivityController> logger)
         {
             _context = context;
+            _fileStorage = fileStorage;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -209,6 +220,293 @@ namespace SchoolManagementSystem.Api.Controllers
             _context.SaveChanges();
 
             return Ok(ToResponseWithReferences(activity));
+        }
+
+        [HttpGet("{activityId}/materials")]
+        public IActionResult GetActivityMaterials(int activityId)
+        {
+            if (!_context.Activities.Any(item => item.Id == activityId))
+                return NotFound("No se encontró la actividad.");
+
+            var materials = _context.ActivityMaterials
+                .Where(item => item.ActivityId == activityId)
+                .OrderBy(item => item.CreatedAt)
+                .ThenBy(item => item.Id)
+                .ToList()
+                .Select(ToMaterialResponse)
+                .ToList();
+
+            return Ok(materials);
+        }
+
+        [HttpPost("{activityId}/materials")]
+        public IActionResult AddActivityMaterial(
+            int activityId,
+            [FromBody] ActivityMaterialRequest request)
+        {
+            var activity = _context.Activities.FirstOrDefault(item => item.Id == activityId);
+            if (activity == null)
+                return NotFound("No se encontró la actividad.");
+            if (!activity.IsActive || activity.PublishedAt.HasValue)
+                return Conflict("Solo se pueden agregar materiales a un borrador activo.");
+
+            if (request.Type == ActivityMaterialType.File)
+                return BadRequest("Los archivos deben cargarse mediante el endpoint de carga de archivos.");
+            if (request.Type != ActivityMaterialType.Link && request.Type != ActivityMaterialType.External)
+                return BadRequest("El tipo de material no es válido.");
+            if (string.IsNullOrWhiteSpace(request.Name))
+                return BadRequest("El nombre del material es obligatorio.");
+            if (!IsHttpUrl(request.Url, out var normalizedUrl))
+                return BadRequest("Ingresá una URL absoluta válida que comience con http:// o https://.");
+
+            var material = new ActivityMaterial
+            {
+                ActivityId = activityId,
+                Type = request.Type,
+                Name = request.Name.Trim(),
+                Description = string.IsNullOrWhiteSpace(request.Description)
+                    ? null
+                    : request.Description.Trim(),
+                Url = normalizedUrl,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.ActivityMaterials.Add(material);
+            _context.SaveChanges();
+
+            return CreatedAtAction(
+                nameof(GetActivityMaterials),
+                new { activityId },
+                ToMaterialResponse(material));
+        }
+
+        [HttpPost("{activityId}/materials/file")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(MaxMaterialFileSize + MultipartOverhead)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MaxMaterialFileSize + MultipartOverhead)]
+        public async Task<IActionResult> UploadActivityMaterialFile(
+            int activityId,
+            IFormFile? file,
+            [FromForm] string? description,
+            CancellationToken cancellationToken)
+        {
+            var activity = _context.Activities.FirstOrDefault(item => item.Id == activityId);
+            if (activity == null)
+                return NotFound("No se encontró la actividad.");
+            if (!activity.IsActive || activity.PublishedAt.HasValue)
+                return Conflict("Solo se pueden agregar archivos a un borrador activo.");
+            if (file == null || file.Length == 0)
+                return BadRequest("Seleccioná un archivo que no esté vacío.");
+            if (file.Length > MaxMaterialFileSize)
+                return BadRequest("El archivo supera el tamaño máximo de 25 MB.");
+            if (!IsSafeFileName(file.FileName))
+                return BadRequest("El nombre del archivo no es válido.");
+
+            string storageKey;
+            try
+            {
+                storageKey = await _fileStorage.SaveAsync(activityId, file, cancellationToken);
+            }
+            catch (InvalidDataException)
+            {
+                return Conflict("No se pudo guardar el archivo en el almacenamiento configurado.");
+            }
+            catch (IOException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "No se pudo guardar el archivo. Intentá nuevamente.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "No hay permisos para guardar archivos en el almacenamiento configurado.");
+            }
+
+            var fileName = Path.GetFileName(file.FileName);
+            var material = new ActivityMaterial
+            {
+                ActivityId = activityId,
+                Type = ActivityMaterialType.File,
+                Name = fileName,
+                FileName = fileName,
+                Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+                ContentType = string.IsNullOrWhiteSpace(file.ContentType)
+                    ? "application/octet-stream"
+                    : file.ContentType,
+                FileSize = file.Length,
+                StorageKey = storageKey,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            try
+            {
+                _context.ActivityMaterials.Add(material);
+                _context.SaveChanges();
+            }
+            catch
+            {
+                try
+                {
+                    _fileStorage.Delete(activityId, storageKey);
+                }
+                catch
+                {
+                    // Preserve the database failure; storage keys are constrained to this activity's directory.
+                }
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "El archivo se recibió, pero no se pudo guardar su registro.");
+            }
+
+            return CreatedAtAction(
+                nameof(GetActivityMaterials),
+                new { activityId },
+                ToMaterialResponse(material));
+        }
+
+        [HttpGet("{activityId}/materials/{materialId}/file")]
+        public IActionResult DownloadActivityMaterialFile(int activityId, int materialId)
+        {
+            if (!_context.Activities.Any(item => item.Id == activityId))
+                return NotFound("No se encontró la actividad.");
+
+            var material = _context.ActivityMaterials.FirstOrDefault(item =>
+                item.Id == materialId && item.ActivityId == activityId);
+            if (material == null || material.Type != ActivityMaterialType.File)
+                return NotFound("No se encontró el archivo solicitado.");
+
+            FileStream? stream;
+            try
+            {
+                stream = _fileStorage.OpenRead(activityId, material.StorageKey);
+            }
+            catch (InvalidDataException)
+            {
+                return NotFound("El archivo asociado ya no está disponible.");
+            }
+            catch (IOException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "No se pudo leer el archivo solicitado.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "No hay permisos para leer el archivo solicitado.");
+            }
+
+            if (stream == null)
+                return NotFound("El archivo asociado ya no está disponible.");
+
+            Response.Headers["X-Content-Type-Options"] = "nosniff";
+            return File(stream, "application/octet-stream", material.FileName ?? material.Name);
+        }
+
+        [HttpDelete("{activityId}/materials/{materialId}")]
+        public IActionResult DeleteActivityMaterial(int activityId, int materialId)
+        {
+            var activity = _context.Activities.FirstOrDefault(item => item.Id == activityId);
+            if (activity == null)
+                return NotFound("No se encontró la actividad.");
+            if (!activity.IsActive || activity.PublishedAt.HasValue)
+                return Conflict("Solo se pueden quitar materiales de un borrador activo.");
+
+            var material = _context.ActivityMaterials.FirstOrDefault(item =>
+                item.Id == materialId && item.ActivityId == activityId);
+            if (material == null)
+                return NotFound("No se encontró el material solicitado.");
+
+            _context.ActivityMaterials.Remove(material);
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch (Exception exception)
+            {
+                // Keep the tracked entity consistent with the database: the file remains untouched.
+                _context.Entry(material).State = EntityState.Unchanged;
+                try
+                {
+                    _logger.LogError(exception,
+                        "Failed to remove activity material {MaterialId} for activity {ActivityId} from the database.",
+                        materialId,
+                        activityId);
+                }
+                catch
+                {
+                    // Logging must not prevent the failed database operation from returning safely.
+                }
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "No se pudo eliminar el material. El archivo se conservó.");
+            }
+
+            try
+            {
+                _fileStorage.Delete(activityId, material.StorageKey);
+            }
+            catch (Exception exception) when (
+                exception is InvalidDataException or IOException or UnauthorizedAccessException)
+            {
+                // The material is already removed; the inaccessible orphan is confined to its storage key.
+                try
+                {
+                    _logger.LogError(exception,
+                        "Material {MaterialId} for activity {ActivityId} was removed, but its stored file could not be cleaned up.",
+                        materialId,
+                        activityId);
+                }
+                catch
+                {
+                    // Cleanup failure must not change the already completed database deletion result.
+                }
+            }
+
+            return NoContent();
+        }
+
+        private static bool IsHttpUrl(string? value, out string? normalizedUrl)
+        {
+            normalizedUrl = null;
+            if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
+                string.IsNullOrWhiteSpace(uri.Host))
+            {
+                return false;
+            }
+
+            normalizedUrl = uri.AbsoluteUri;
+            return true;
+        }
+
+        private static bool IsSafeFileName(string fileName)
+        {
+            return !string.IsNullOrWhiteSpace(fileName) &&
+                fileName.Length <= 255 &&
+                !Path.IsPathRooted(fileName) &&
+                string.Equals(Path.GetFileName(fileName), fileName, StringComparison.Ordinal) &&
+                !fileName.Contains('/') &&
+                !fileName.Contains('\\') &&
+                !fileName.Any(char.IsControl) &&
+                fileName.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 &&
+                fileName.Trim() != "." &&
+                fileName.Trim() != "..";
+        }
+
+        private static ActivityMaterialResponse ToMaterialResponse(ActivityMaterial material)
+        {
+            return new ActivityMaterialResponse
+            {
+                Id = material.Id,
+                Type = (int)material.Type,
+                Name = material.Name,
+                Description = material.Description,
+                Url = material.Url,
+                FileName = material.FileName,
+                FileSize = material.FileSize,
+                ContentType = material.ContentType,
+                CreatedAt = material.CreatedAt
+            };
         }
 
         private IQueryable<Activity> QueryWithReferences()
