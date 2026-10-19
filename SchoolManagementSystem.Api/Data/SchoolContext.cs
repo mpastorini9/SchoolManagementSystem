@@ -34,6 +34,10 @@ namespace SchoolManagementSystem.Api.Data
             modelBuilder.Entity<StudentSubmission>()
                 .HasIndex(item => item.ActivityStudentId)
                 .IsUnique();
+
+            modelBuilder.Entity<SubmissionRevision>()
+                .HasIndex(item => new { item.StudentSubmissionId, item.Version })
+                .IsUnique();
         }
     }
 }

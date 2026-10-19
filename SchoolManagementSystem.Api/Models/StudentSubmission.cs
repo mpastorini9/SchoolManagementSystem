@@ -1,5 +1,7 @@
 namespace SchoolManagementSystem.Api.Models
 {
+    using System.Collections.Generic;
+
     public class StudentSubmission
     {
         public int Id { get; set; }
@@ -14,5 +16,7 @@ namespace SchoolManagementSystem.Api.Models
         public string? Value { get; set; }
 
         public string? TeacherObservation { get; set; }
+
+        public ICollection<SubmissionRevision> Revisions { get; set; } = new List<SubmissionRevision>();
     }
 }

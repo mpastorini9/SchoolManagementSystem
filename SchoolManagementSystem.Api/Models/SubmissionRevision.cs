@@ -11,6 +11,8 @@ namespace SchoolManagementSystem.Api.Models
 
         public string FileName { get; set; } = string.Empty;
 
+        public string? Value { get; set; }
+
         public string? ContentType { get; set; }
 
         public long FileSize { get; set; }

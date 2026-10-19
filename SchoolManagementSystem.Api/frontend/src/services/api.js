@@ -237,3 +237,28 @@ export function uploadActivityMaterialFile(activityId, file, description = "") {
 export function getActivityMaterialFileUrl(activityId, materialId) {
   return `${API_URL}/Activity/${activityId}/materials/${materialId}/file`;
 }
+
+export function getStudentSubmissions(studentId) {
+  return requestJson(`${API_URL}/students/${studentId}/submissions`);
+}
+
+export function submitStudentActivity(studentId, activityId, { value, file } = {}) {
+  const formData = new FormData();
+  if (value?.trim()) formData.append("value", value.trim());
+  if (file) formData.append("file", file);
+
+  return requestJson(
+    `${API_URL}/students/${studentId}/activities/${activityId}/submissions`,
+    { method: "POST", body: formData }
+  );
+}
+
+export function getStudentSubmissionRevisions(studentId, submissionId) {
+  return requestJson(
+    `${API_URL}/students/${studentId}/submissions/${submissionId}/revisions`
+  );
+}
+
+export function getStudentSubmissionFileUrl(studentId, submissionId, revisionId) {
+  return `${API_URL}/students/${studentId}/submissions/${submissionId}/revisions/${revisionId}/file`;
+}

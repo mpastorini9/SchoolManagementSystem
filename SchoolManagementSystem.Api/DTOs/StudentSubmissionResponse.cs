@@ -21,5 +21,7 @@ namespace SchoolManagementSystem.Api.DTOs
         public string SubmissionStatus { get; set; } = string.Empty;
 
         public SubmissionRevisionResponse? CurrentRevision { get; set; }
+
+        public List<SubmissionRevisionResponse> Revisions { get; set; } = new();
     }
 }
