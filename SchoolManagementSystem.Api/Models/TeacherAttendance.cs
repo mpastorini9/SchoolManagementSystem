@@ -6,9 +6,10 @@ namespace SchoolManagementSystem.Api.Models
         Absent
     }
 
-    public class TeacherAttendance
+    public class TeacherAttendance : ISchoolScoped
     {
         public int Id { get; set; }
+        public int SchoolId { get; set; }
         public int TeacherScheduleId { get; set; }
         public TeacherSchedule? TeacherSchedule { get; set; }
         public DateTime Date { get; set; }

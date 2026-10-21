@@ -14,7 +14,7 @@ import {
   addActivityMaterial,
   uploadActivityMaterialFile,
   deleteActivityMaterial,
-  getActivityMaterialFileUrl
+  downloadActivityMaterialFile
 } from "../services/api";
 import "./Activities.css";
 
@@ -648,13 +648,13 @@ function Activities() {
                 <>
                   <span>{material.fileName || material.name} · {formatFileSize(material.fileSize)}</span>
                   {currentDraft && (
-                    <a
+                    <button
                       className="activity-material-link"
-                      href={getActivityMaterialFileUrl(currentDraft.id, material.id)}
-                      download
+                      type="button"
+                      onClick={() => downloadActivityMaterialFile(currentDraft.id, material.id, material.fileName || material.name)}
                     >
                       Descargar archivo
-                    </a>
+                    </button>
                   )}
                 </>
               ) : (

@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.DTOs;
 using SchoolManagementSystem.Api.Models;
+using Microsoft.AspNetCore.Authorization;
+using SchoolManagementSystem.Api.Services;
 
 namespace SchoolManagementSystem.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = SchoolRoles.SchoolAdministrator)]
     public class ImportController : ControllerBase
     {
         private readonly SchoolContext _context;

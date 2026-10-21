@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.DTOs;
 using SchoolManagementSystem.Api.Models;
+using Microsoft.AspNetCore.Authorization;
+using SchoolManagementSystem.Api.Services;
 
 namespace SchoolManagementSystem.Api.Controllers
 {
@@ -15,9 +17,16 @@ namespace SchoolManagementSystem.Api.Controllers
         public TeacherAttendanceController(SchoolContext context) => _context = context;
 
         [HttpGet("schedules")]
+        [Authorize(Roles = SchoolRoles.SchoolAdministrator + "," + SchoolRoles.Teacher)]
         public IActionResult GetSchedules()
         {
-            var schedules = _context.TeacherSchedules
+            var query = _context.TeacherSchedules.AsQueryable();
+            if (User.IsInRole(SchoolRoles.Teacher))
+            {
+                if (!int.TryParse(User.FindFirst("teacher_id")?.Value, out var teacherId)) return Forbid();
+                query = query.Where(schedule => schedule.TeacherId == teacherId);
+            }
+            var schedules = query
                 .Include(schedule => schedule.Teacher)
                 .Include(schedule => schedule.Course)
                 .Include(schedule => schedule.Subject)
@@ -31,6 +40,7 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpPost("schedules")]
+        [Authorize(Roles = SchoolRoles.SchoolAdministrator)]
         public IActionResult CreateSchedule([FromBody] CreateTeacherScheduleRequest request)
         {
             if (request.TeacherId <= 0 || request.CourseId <= 0 || request.SubjectId <= 0)
@@ -66,6 +76,7 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = SchoolRoles.SchoolAdministrator)]
         public IActionResult GetTeacherAttendances()
         {
             var attendances = _context.TeacherAttendances
@@ -80,6 +91,7 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = SchoolRoles.SchoolAdministrator)]
         public IActionResult TakeTeacherAttendance([FromBody] TakeTeacherAttendanceRequest request)
         {
             if (request.TeacherScheduleId <= 0) return BadRequest("TeacherScheduleId is required.");

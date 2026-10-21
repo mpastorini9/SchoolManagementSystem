@@ -2,9 +2,10 @@
 
 {
     using System.Collections.Generic;
-    public class Course
+    public class Course : ISchoolScoped
     {
         public int Id { get; set; }
+        public int SchoolId { get; set; }
         public string Name { get; set; } = string.Empty;
         public ICollection<Student> Students { get; set; } = new List<Student>();
     }
@@ -14,9 +15,10 @@ using System.Text.Json.Serialization;
 
 namespace SchoolManagementSystem.Api.Models
 {
-    public class Course
+    public class Course : ISchoolScoped
     {
         public int Id { get; set; }
+        public int SchoolId { get; set; }
 
         public string Name { get; set; } = string.Empty;
 

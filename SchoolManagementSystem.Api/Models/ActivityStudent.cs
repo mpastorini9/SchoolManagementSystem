@@ -1,8 +1,9 @@
 namespace SchoolManagementSystem.Api.Models
 {
-    public class ActivityStudent
+    public class ActivityStudent : ISchoolScoped
     {
         public int Id { get; set; }
+        public int SchoolId { get; set; }
 
         public int ActivityId { get; set; }
         public Activity? Activity { get; set; }

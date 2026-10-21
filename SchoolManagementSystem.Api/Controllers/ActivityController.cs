@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.DTOs;
@@ -9,6 +10,7 @@ namespace SchoolManagementSystem.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ActivityController : ControllerBase
     {
         private const long MaxMaterialFileSize = 25 * 1024 * 1024;
@@ -42,6 +44,22 @@ namespace SchoolManagementSystem.Api.Controllers
                 .Include(item => item.TargetStudent)
                 .AsQueryable();
 
+            if (User.IsInRole(SchoolRoles.Student))
+            {
+                if (!TryGetStudentId(out var studentId)) return Forbid();
+                query = query.Where(item => item.PublishedAt.HasValue && item.IsActive &&
+                    _context.ActivityStudents.Any(assignment => assignment.ActivityId == item.Id && assignment.StudentId == studentId));
+                includeInactive = false;
+            }
+            else if (User.IsInRole(SchoolRoles.Teacher))
+            {
+                if (!TryGetTeacherId(out var scopedTeacherId)) return Forbid();
+                if (!_context.Teachers.Any(teacher => teacher.Id == scopedTeacherId && teacher.IsActive)) return Forbid();
+                query = query.Where(item => item.TeacherId == scopedTeacherId);
+                includeInactive = false;
+            }
+            else if (!User.IsInRole(SchoolRoles.SchoolAdministrator)) return Forbid();
+
             if (!includeInactive)
                 query = query.Where(item => item.IsActive);
 
@@ -65,8 +83,10 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = SchoolRoles.Teacher + "," + SchoolRoles.SchoolAdministrator)]
         public IActionResult CreateActivity([FromBody] CreateActivityRequest request)
         {
+            if (User.IsInRole(SchoolRoles.Teacher) && (!TryGetTeacherId(out var currentTeacherId) || currentTeacherId != request.TeacherId)) return Forbid();
             var validation = ValidateActivityRequest(
                 request.TeacherId,
                 request.CourseId,
@@ -117,16 +137,19 @@ namespace SchoolManagementSystem.Api.Controllers
             if (activity == null)
                 return NotFound("No se encontró la actividad.");
 
+            if (!CanViewActivity(activity)) return NotFound("Activity not found.");
             return Ok(ToResponse(activity));
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = SchoolRoles.Teacher + "," + SchoolRoles.SchoolAdministrator)]
         public IActionResult UpdateActivity(
             int id,
             [FromBody] UpdateActivityRequest request)
         {
             var activity = _context.Activities
                 .FirstOrDefault(item => item.Id == id);
+            if (activity != null && !CanManageActivity(activity)) return Forbid();
 
             if (activity == null)
                 return NotFound("No se encontró la actividad.");
@@ -146,6 +169,7 @@ namespace SchoolManagementSystem.Api.Controllers
 
             if (validation.Error != null)
                 return validation.Error;
+            if (User.IsInRole(SchoolRoles.Teacher) && (!TryGetTeacherId(out var currentTeacherId) || currentTeacherId != request.TeacherId)) return Forbid();
 
             activity.TeacherId = request.TeacherId;
             activity.CourseId = request.CourseId;
@@ -166,10 +190,12 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpPost("{id}/publish")]
+        [Authorize(Roles = SchoolRoles.Teacher + "," + SchoolRoles.SchoolAdministrator)]
         public IActionResult PublishActivity(int id)
         {
             var activity = _context.Activities
                 .FirstOrDefault(item => item.Id == id);
+            if (activity != null && !CanManageActivity(activity)) return Forbid();
 
             if (activity == null)
                 return NotFound("No se encontró la actividad.");
@@ -225,6 +251,8 @@ namespace SchoolManagementSystem.Api.Controllers
         [HttpGet("{activityId}/materials")]
         public IActionResult GetActivityMaterials(int activityId)
         {
+            var activity = _context.Activities.FirstOrDefault(item => item.Id == activityId);
+            if (activity == null || !CanViewActivity(activity)) return NotFound("Activity not found.");
             if (!_context.Activities.Any(item => item.Id == activityId))
                 return NotFound("No se encontró la actividad.");
 
@@ -240,11 +268,13 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpPost("{activityId}/materials")]
+        [Authorize(Roles = SchoolRoles.Teacher + "," + SchoolRoles.SchoolAdministrator)]
         public IActionResult AddActivityMaterial(
             int activityId,
             [FromBody] ActivityMaterialRequest request)
         {
             var activity = _context.Activities.FirstOrDefault(item => item.Id == activityId);
+            if (activity != null && !CanManageActivity(activity)) return Forbid();
             if (activity == null)
                 return NotFound("No se encontró la actividad.");
             if (!activity.IsActive || activity.PublishedAt.HasValue)
@@ -281,6 +311,7 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpPost("{activityId}/materials/file")]
+        [Authorize(Roles = SchoolRoles.Teacher + "," + SchoolRoles.SchoolAdministrator)]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(MaxMaterialFileSize + MultipartOverhead)]
         [RequestFormLimits(MultipartBodyLengthLimit = MaxMaterialFileSize + MultipartOverhead)]
@@ -291,6 +322,7 @@ namespace SchoolManagementSystem.Api.Controllers
             CancellationToken cancellationToken)
         {
             var activity = _context.Activities.FirstOrDefault(item => item.Id == activityId);
+            if (activity != null && !CanManageActivity(activity)) return Forbid();
             if (activity == null)
                 return NotFound("No se encontró la actividad.");
             if (!activity.IsActive || activity.PublishedAt.HasValue)
@@ -367,6 +399,8 @@ namespace SchoolManagementSystem.Api.Controllers
         [HttpGet("{activityId}/materials/{materialId}/file")]
         public IActionResult DownloadActivityMaterialFile(int activityId, int materialId)
         {
+            var activity = _context.Activities.FirstOrDefault(item => item.Id == activityId);
+            if (activity == null || !CanViewActivity(activity)) return NotFound("Activity not found.");
             if (!_context.Activities.Any(item => item.Id == activityId))
                 return NotFound("No se encontró la actividad.");
 
@@ -403,9 +437,11 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpDelete("{activityId}/materials/{materialId}")]
+        [Authorize(Roles = SchoolRoles.Teacher + "," + SchoolRoles.SchoolAdministrator)]
         public IActionResult DeleteActivityMaterial(int activityId, int materialId)
         {
             var activity = _context.Activities.FirstOrDefault(item => item.Id == activityId);
+            if (activity != null && !CanManageActivity(activity)) return Forbid();
             if (activity == null)
                 return NotFound("No se encontró la actividad.");
             if (!activity.IsActive || activity.PublishedAt.HasValue)
@@ -463,6 +499,19 @@ namespace SchoolManagementSystem.Api.Controllers
             }
 
             return NoContent();
+        }
+
+        private bool TryGetStudentId(out int studentId) => int.TryParse(User.FindFirst("student_id")?.Value, out studentId);
+        private bool TryGetTeacherId(out int teacherId) => int.TryParse(User.FindFirst("teacher_id")?.Value, out teacherId);
+        private bool CanManageActivity(Activity activity) => User.IsInRole(SchoolRoles.SchoolAdministrator) ||
+            (User.IsInRole(SchoolRoles.Teacher) && TryGetTeacherId(out var teacherId) && activity.TeacherId == teacherId &&
+             _context.Teachers.Any(teacher => teacher.Id == teacherId && teacher.IsActive));
+        private bool CanViewActivity(Activity activity)
+        {
+            if (User.IsInRole(SchoolRoles.SchoolAdministrator)) return true;
+            if (User.IsInRole(SchoolRoles.Teacher)) return CanManageActivity(activity);
+            return User.IsInRole(SchoolRoles.Student) && TryGetStudentId(out var studentId) && activity.IsActive && activity.PublishedAt.HasValue &&
+                _context.ActivityStudents.Any(item => item.ActivityId == activity.Id && item.StudentId == studentId);
         }
 
         private static bool IsHttpUrl(string? value, out string? normalizedUrl)

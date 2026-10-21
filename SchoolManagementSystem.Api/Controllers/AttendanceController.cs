@@ -3,11 +3,14 @@ using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.Models;
 using SchoolManagementSystem.Api.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using SchoolManagementSystem.Api.Services;
 
 namespace SchoolManagementSystem.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = SchoolRoles.SchoolAdministrator)]
     public class AttendanceController : ControllerBase
     {
         private readonly SchoolContext _context;

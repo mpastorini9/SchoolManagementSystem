@@ -1,12 +1,21 @@
-const API_URL = "http://localhost:5003/api";
+import { apiUrl, getAccessToken } from "../auth/oidc";
+
+const API_URL = `${apiUrl}/api`;
+
+async function authenticatedFetch(url, options = {}) {
+  const token = await getAccessToken();
+  const headers = new Headers(options.headers ?? {});
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(url, { ...options, headers });
+}
 
 export async function getStudents() {
-  const res = await fetch(`${API_URL}/Student`);
+  const res = await authenticatedFetch(`${API_URL}/Student`);
   return res.json();
 }
 
 export async function createStudent(student) {
-  const res = await fetch(`${API_URL}/Student`, {
+  const res = await authenticatedFetch(`${API_URL}/Student`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -18,12 +27,12 @@ export async function createStudent(student) {
 }
 
 export async function getCourses() {
-  const res = await fetch(`${API_URL}/Course`);
+  const res = await authenticatedFetch(`${API_URL}/Course`);
   return res.json();
 }
 
 export async function takeAttendance({ courseId, date, absentStudentsIds }) {
-  const res = await fetch(`${API_URL}/Attendance/take-attendance`, {
+  const res = await authenticatedFetch(`${API_URL}/Attendance/take-attendance`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -39,7 +48,7 @@ export async function takeAttendance({ courseId, date, absentStudentsIds }) {
 }
 
 export async function getTeachers() {
-  const res = await fetch(`${API_URL}/Teacher`);
+  const res = await authenticatedFetch(`${API_URL}/Teacher`);
 
   if (!res.ok) {
     throw new Error("Failed to load teachers.");
@@ -49,7 +58,7 @@ export async function getTeachers() {
 }
 
 export async function createTeacher(teacher) {
-  const res = await fetch(`${API_URL}/Teacher`, {
+  const res = await authenticatedFetch(`${API_URL}/Teacher`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -68,7 +77,7 @@ export async function createTeacher(teacher) {
 }
 
 export async function updateTeacher(id, teacher) {
-  const res = await fetch(`${API_URL}/Teacher/${id}`, {
+  const res = await authenticatedFetch(`${API_URL}/Teacher/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json"
@@ -87,7 +96,7 @@ export async function updateTeacher(id, teacher) {
 }
 
 export async function deleteTeacher(id) {
-  const res = await fetch(`${API_URL}/Teacher/${id}`, {
+  const res = await authenticatedFetch(`${API_URL}/Teacher/${id}`, {
     method: "DELETE"
   });
 
@@ -100,7 +109,7 @@ export async function deleteTeacher(id) {
 }
 
 async function requestJson(url, options) {
-  const res = await fetch(url, options);
+  const res = await authenticatedFetch(url, options);
 
   if (!res.ok) {
     const error = new Error(await res.text());
@@ -234,31 +243,40 @@ export function uploadActivityMaterialFile(activityId, file, description = "") {
   });
 }
 
-export function getActivityMaterialFileUrl(activityId, materialId) {
-  return `${API_URL}/Activity/${activityId}/materials/${materialId}/file`;
+export async function downloadActivityMaterialFile(activityId, materialId, fileName) {
+  await downloadFile(`${API_URL}/Activity/${activityId}/materials/${materialId}/file`, fileName);
 }
 
-export function getStudentSubmissions(studentId) {
-  return requestJson(`${API_URL}/students/${studentId}/submissions`);
+export function getStudentSubmissions() {
+  return requestJson(`${API_URL}/student/submissions`);
 }
 
-export function submitStudentActivity(studentId, activityId, { value, file } = {}) {
+export function submitStudentActivity(activityId, { value, file } = {}) {
   const formData = new FormData();
   if (value?.trim()) formData.append("value", value.trim());
   if (file) formData.append("file", file);
 
   return requestJson(
-    `${API_URL}/students/${studentId}/activities/${activityId}/submissions`,
+    `${API_URL}/student/activities/${activityId}/submissions`,
     { method: "POST", body: formData }
   );
 }
 
-export function getStudentSubmissionRevisions(studentId, submissionId) {
-  return requestJson(
-    `${API_URL}/students/${studentId}/submissions/${submissionId}/revisions`
-  );
+export function getStudentSubmissionRevisions(submissionId) {
+  return requestJson(`${API_URL}/student/submissions/${submissionId}/revisions`);
 }
 
-export function getStudentSubmissionFileUrl(studentId, submissionId, revisionId) {
-  return `${API_URL}/students/${studentId}/submissions/${submissionId}/revisions/${revisionId}/file`;
+export async function downloadStudentSubmissionFile(submissionId, revisionId, fileName) {
+  await downloadFile(`${API_URL}/student/submissions/${submissionId}/revisions/${revisionId}/file`, fileName);
+}
+
+async function downloadFile(url, fileName) {
+  const response = await authenticatedFetch(url);
+  if (!response.ok) throw new Error(await response.text());
+  const objectUrl = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = fileName || "download";
+  link.click();
+  URL.revokeObjectURL(objectUrl);
 }

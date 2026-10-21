@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.DTOs;
@@ -7,9 +8,9 @@ using SchoolManagementSystem.Api.Services;
 
 namespace SchoolManagementSystem.Api.Controllers
 {
-    // studentId scopes the request only; it is not an authenticated identity.
+    [Authorize(Roles = SchoolRoles.Student)]
     [ApiController]
-    [Route("api/students/{studentId:int}")]
+    [Route("api/student")]
     public class StudentSubmissionController : ControllerBase
     {
         private const long MaxSubmissionFileSize = 25 * 1024 * 1024;
@@ -25,8 +26,10 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpGet("submissions")]
-        public IActionResult GetSubmissions(int studentId)
+        public IActionResult GetSubmissions()
         {
+            if (!int.TryParse(User.FindFirst("student_id")?.Value, out var studentId))
+                return Forbid();
             if (!_context.Students.Any(student => student.Id == studentId))
                 return NotFound("No se encontró el alumno.");
 
@@ -51,11 +54,12 @@ namespace SchoolManagementSystem.Api.Controllers
         [RequestSizeLimit(MaxSubmissionFileSize + MultipartOverhead)]
         [RequestFormLimits(MultipartBodyLengthLimit = MaxSubmissionFileSize + MultipartOverhead)]
         public async Task<IActionResult> Submit(
-            int studentId,
             int activityId,
             [FromForm] CreateStudentSubmissionRequest request,
             CancellationToken cancellationToken)
         {
+            if (!int.TryParse(User.FindFirst("student_id")?.Value, out var studentId))
+                return Forbid();
             var assignment = _context.ActivityStudents
                 .Include(item => item.Activity)
                 .Include(item => item.Student)
@@ -170,7 +174,7 @@ namespace SchoolManagementSystem.Api.Controllers
             {
                 return CreatedAtAction(
                     nameof(GetRevisions),
-                    new { studentId, submissionId = submission.Id },
+                    new { submissionId = submission.Id },
                     response);
             }
 
@@ -178,8 +182,10 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpGet("submissions/{submissionId:int}/revisions")]
-        public IActionResult GetRevisions(int studentId, int submissionId)
+        public IActionResult GetRevisions(int submissionId)
         {
+            if (!int.TryParse(User.FindFirst("student_id")?.Value, out var studentId))
+                return Forbid();
             var submission = FindStudentSubmission(studentId, submissionId);
             if (submission == null)
                 return NotFound("No se encontró la entrega del alumno.");
@@ -191,8 +197,10 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpGet("submissions/{submissionId:int}/revisions/{revisionId:int}/file")]
-        public IActionResult DownloadRevisionFile(int studentId, int submissionId, int revisionId)
+        public IActionResult DownloadRevisionFile(int submissionId, int revisionId)
         {
+            if (!int.TryParse(User.FindFirst("student_id")?.Value, out var studentId))
+                return Forbid();
             var submission = FindStudentSubmission(studentId, submissionId);
             if (submission == null)
                 return NotFound("No se encontró la entrega del alumno.");

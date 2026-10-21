@@ -2,9 +2,10 @@ namespace SchoolManagementSystem.Api.Models
 {
     using System.Collections.Generic;
 
-    public class StudentSubmission
+    public class StudentSubmission : ISchoolScoped
     {
         public int Id { get; set; }
+        public int SchoolId { get; set; }
 
         public int ActivityStudentId { get; set; }
         public ActivityStudent? ActivityStudent { get; set; }

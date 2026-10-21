@@ -170,3 +170,32 @@ It should be read together with:
 - 02-architecture/SecurityArchitecture.md
 
 Together, these documents define how the system establishes identity and protects its public interfaces.
+
+## OpenIddict configuration for this repository
+
+The API uses ASP.NET Core Identity and OpenIddict with Authorization Code + PKCE. School-scoped records and users are isolated by the authenticated `school_id` claim. The API does not support public student self-registration; an administrator provisions an account and links it to an existing student or teacher record. `studentId` and `teacherId` are account links, not proof of identity.
+
+### Local development
+
+Development defaults to EF Core InMemory storage and development-only ephemeral OpenIddict keys. The development school is configured with `Development__SchoolId` and `Development__SchoolName`; no account or password is created by default. To bootstrap a local administrator, set `Authentication__BootstrapAdmin__Email`, `Authentication__BootstrapAdmin__Password`, and `Authentication__BootstrapAdmin__SchoolId` for the API process. The configured school must already exist. Never reuse development credentials in a deployed environment.
+
+### Deployed environments
+
+Outside Development, the API fails startup unless all required durable settings are present:
+
+- `Database__Provider=SqlServer`
+- `ConnectionStrings__SchoolDatabase` with the SQL Server connection string
+- `Authentication__Issuer`, `Authentication__FrontendOrigin`, `Authentication__ClientId`, and `Authentication__AllowedOrigins__0` (and additional allowed origins as needed), all using HTTPS
+- `Authentication__Certificates__SigningPath` and `Authentication__Certificates__SigningPassword`
+- `Authentication__Certificates__EncryptionPath` and `Authentication__Certificates__EncryptionPassword`
+- `Authentication__DataProtection__KeyRingPath`, pointing to an existing persistent directory shared by API instances
+
+Provision private certificates and their passwords through the deployment's secret and certificate management system. Keep the Data Protection key ring on durable shared storage, protected by the configured encryption certificate. Do not commit certificate files, private keys, passwords, connection strings, or credentials.
+
+The optional bootstrap administrator uses `Authentication__BootstrapAdmin__Email`, `Authentication__BootstrapAdmin__Password`, and `Authentication__BootstrapAdmin__SchoolId`. Its school must be initialized first. Do not configure this bootstrap mechanism as a public endpoint or put its values in source control.
+
+### Database initialization
+
+The repository contains versioned EF Core migrations. Apply them deliberately to the target SQL Server using the configured connection string and `dotnet ef database update`; application startup does not create or migrate a deployed database automatically. The initial schema does not assign fictional schools to existing records. Before importing any legacy records, create each real `Schools` row and explicitly associate every user and school-scoped record with its actual school. Configure the bootstrap administrator with the matching school ID. Existing development InMemory data is transient and is not migrated automatically.
+
+For the React client, configure `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, and `VITE_API_URL` as described in `frontend/.env.example`.

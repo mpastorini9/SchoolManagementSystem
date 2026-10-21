@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.Models;
+using Microsoft.AspNetCore.Authorization;
+using SchoolManagementSystem.Api.Services;
 
 namespace SchoolManagementSystem.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class CourseController : ControllerBase
     {
         private readonly SchoolContext _context;
@@ -26,6 +29,7 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = SchoolRoles.SchoolAdministrator)]
         public IActionResult CreateCourse(Course course)
         {
             _context.Courses.Add(course);

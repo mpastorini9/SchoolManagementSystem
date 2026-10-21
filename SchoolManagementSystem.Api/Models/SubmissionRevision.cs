@@ -1,8 +1,9 @@
 namespace SchoolManagementSystem.Api.Models
 {
-    public class SubmissionRevision
+    public class SubmissionRevision : ISchoolScoped
     {
         public int Id { get; set; }
+        public int SchoolId { get; set; }
 
         public int StudentSubmissionId { get; set; }
         public StudentSubmission? StudentSubmission { get; set; }

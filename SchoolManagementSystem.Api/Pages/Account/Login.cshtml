@@ -1,0 +1,36 @@
+@page
+@model SchoolManagementSystem.Api.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Iniciar sesión";
+}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 3rem auto; max-width: 28rem; padding: 0 1rem; }
+        label, input { display: block; width: 100%; box-sizing: border-box; }
+        input { margin: .4rem 0 1rem; padding: .7rem; }
+        button { padding: .7rem 1rem; }
+        .error { color: #a00; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Iniciar sesión</h1>
+        <p>Ingresá con la cuenta que te proporcionó la administración de la escuela.</p>
+        <form method="post" asp-page="/Account/Login">
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="error"></div>
+            <label asp-for="Input.Email">Correo electrónico</label>
+            <input asp-for="Input.Email" type="email" autocomplete="username" required />
+            <label asp-for="Input.Password">Contraseña</label>
+            <input asp-for="Input.Password" type="password" autocomplete="current-password" required />
+            <label><input asp-for="Input.RememberMe" type="checkbox" /> Mantener sesión iniciada</label>
+            <button type="submit">Ingresar</button>
+        </form>
+    </main>
+</body>
+</html>

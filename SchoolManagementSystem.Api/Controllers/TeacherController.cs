@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using SchoolManagementSystem.Api.Data;
 using SchoolManagementSystem.Api.DTOs;
 using SchoolManagementSystem.Api.Models;
+using Microsoft.AspNetCore.Authorization;
+using SchoolManagementSystem.Api.Services;
 
 namespace SchoolManagementSystem.Api.Controllers
 {
@@ -17,9 +19,16 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = SchoolRoles.SchoolAdministrator + "," + SchoolRoles.Teacher)]
         public IActionResult GetTeachers()
         {
-            var teachers = _context.Teachers
+            var query = _context.Teachers.AsQueryable();
+            if (User.IsInRole(SchoolRoles.Teacher))
+            {
+                if (!int.TryParse(User.FindFirst("teacher_id")?.Value, out var teacherId)) return Forbid();
+                query = query.Where(teacher => teacher.Id == teacherId);
+            }
+            var teachers = query
                 .Where(teacher => teacher.IsActive)
                 .OrderBy(teacher => teacher.LastName)
                 .ThenBy(teacher => teacher.FirstName)
@@ -36,6 +45,7 @@ namespace SchoolManagementSystem.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = SchoolRoles.SchoolAdministrator)]
         public IActionResult CreateTeacher([FromBody] CreateTeacherRequest request)
         {
             var firstName = request.FirstName?.Trim();
@@ -103,6 +113,7 @@ namespace SchoolManagementSystem.Api.Controllers
 
         // ===== EDITAR DOCENTE =====
         [HttpPut("{id}")]
+        [Authorize(Roles = SchoolRoles.SchoolAdministrator)]
         public IActionResult UpdateTeacher(
             int id,
             [FromBody] CreateTeacherRequest request)
@@ -175,6 +186,7 @@ namespace SchoolManagementSystem.Api.Controllers
 
         // ===== ELIMINAR DOCENTE (ELIMINACIÓN LÓGICA) =====
         [HttpDelete("{id}")]
+        [Authorize(Roles = SchoolRoles.SchoolAdministrator)]
         public IActionResult DeleteTeacher(int id)
         {
             var teacher = _context.Teachers

@@ -1,8 +1,9 @@
 namespace SchoolManagementSystem.Api.Models
 {
-    public class TeacherSchedule
+    public class TeacherSchedule : ISchoolScoped
     {
         public int Id { get; set; }
+        public int SchoolId { get; set; }
         public int TeacherId { get; set; }
         public Teacher? Teacher { get; set; }
         public int CourseId { get; set; }
