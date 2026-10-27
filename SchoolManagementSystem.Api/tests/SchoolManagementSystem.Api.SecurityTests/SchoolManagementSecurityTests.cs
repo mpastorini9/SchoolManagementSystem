@@ -46,8 +46,19 @@ public sealed class SchoolManagementSecurityTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/student/submissions")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/student/submissions/6001/revisions")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/teacher/activities/3001/submissions")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.PutAsJsonAsync("/api/teacher/submissions/6001/feedback", new { Observation = "x" })).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/Activity/3001/materials")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/Activity/3001/materials/8001/file")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/family/students")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/family/students/1001/attendance")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/family/students/1001/activities")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/family/students/1001/schedule")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/family/students/1001/grades")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/family/students/1001/records")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/family/students/1001/activities/3001/materials")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await client.GetAsync("/api/family/students/1001/activities/3001/materials/8001/file")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/admin/family-links")).StatusCode);
     }
 
     [Fact]
@@ -168,6 +179,379 @@ public sealed class SchoolManagementSecurityTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Family_accounts_can_read_only_linked_students_attendance_activities_and_materials()
+    {
+        var family = await _host.AuthenticateAsync(_host.FamilyOne);
+        using var client = family.Client;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", family.AccessToken);
+
+        using var students = JsonDocument.Parse(await client.GetStringAsync("/api/family/students"));
+        var studentIds = students.RootElement.EnumerateArray().Select(item => item.GetProperty("id").GetInt32()).ToArray();
+        Assert.Equal(new[] { 1001, 1002 }, studentIds);
+
+        using var attendance = JsonDocument.Parse(await client.GetStringAsync("/api/family/students/1001/attendance"));
+        Assert.Equal("Absent", attendance.RootElement[0].GetProperty("status").GetString());
+        var unlinkedAttendance = await client.GetAsync("/api/family/students/1003/attendance");
+        await AssertNotFoundWithoutPrivateDataAsync(unlinkedAttendance, "Student Three", _host.FamilyOtherSchool.Email);
+        var crossSchoolAttendance = await client.GetAsync("/api/family/students/2001/attendance");
+        await AssertNotFoundWithoutPrivateDataAsync(crossSchoolAttendance,
+            "Other School Student", "School Two Course", _host.FamilyOtherSchool.Email);
+
+        using var activities = JsonDocument.Parse(await client.GetStringAsync("/api/family/students/1001/activities"));
+        var activityIds = activities.RootElement.EnumerateArray().Select(item => item.GetProperty("id").GetInt32()).ToArray();
+        Assert.Equal(new[] { 3001 }, activityIds);
+        var familySubmission = activities.RootElement[0].GetProperty("submission");
+        Assert.Equal(6001, familySubmission.GetProperty("id").GetInt32());
+        Assert.NotEmpty(familySubmission.GetProperty("revisions").EnumerateArray());
+        var submittedFile = await client.GetAsync($"/api/family/students/1001/activities/3001/submissions/6001/revisions/7001/file");
+        Assert.Equal(HttpStatusCode.OK, submittedFile.StatusCode);
+        Assert.Equal("student-one-file", await submittedFile.Content.ReadAsStringAsync());
+        var unauthorizedSubmittedFile = await client.GetAsync("/api/family/students/1003/activities/3001/submissions/6001/revisions/7001/file");
+        await AssertNotFoundWithoutPrivateDataAsync(unauthorizedSubmittedFile, "Student Three", "test answer", _host.FamilyOtherSchool.Email);
+        Assert.DoesNotContain("teacherObservation", activities.RootElement.GetRawText(), StringComparison.OrdinalIgnoreCase);
+        var unassignedActivityMaterials = await client.GetAsync("/api/family/students/1001/activities/3002/materials");
+        await AssertNotFoundWithoutPrivateDataAsync(unassignedActivityMaterials,
+            "Student Two", "Other School Student", _host.FamilyOtherSchool.Email);
+
+        using var materials = JsonDocument.Parse(await client.GetStringAsync("/api/family/students/1001/activities/3001/materials"));
+        Assert.Equal(8001, materials.RootElement[0].GetProperty("id").GetInt32());
+        var file = await client.GetAsync("/api/family/students/1001/activities/3001/materials/8001/file");
+        Assert.Equal(HttpStatusCode.OK, file.StatusCode);
+        Assert.Equal("school-one-material", await file.Content.ReadAsStringAsync());
+        var unlinkedFile = await client.GetAsync("/api/family/students/1003/activities/3001/materials/8001/file");
+        await AssertNotFoundWithoutPrivateDataAsync(unlinkedFile,
+            "Student Three", "Other School Student", _host.FamilyOtherSchool.Email, "other school material");
+
+        var secondAdult = await _host.AuthenticateAsync(_host.FamilyTwo);
+        using var secondAdultClient = secondAdult.Client;
+        secondAdultClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", secondAdult.AccessToken);
+        Assert.Equal(HttpStatusCode.OK, (await secondAdultClient.GetAsync("/api/family/students/1001/attendance")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Family_academic_endpoints_are_link_scoped_and_read_only()
+    {
+        var family = await _host.AuthenticateAsync(_host.FamilyOne);
+        using var client = family.Client;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", family.AccessToken);
+
+        foreach (var endpoint in new[] { "schedule", "grades", "records" })
+        {
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/family/students/1001/{endpoint}")).StatusCode);
+            var unlinked = await client.GetAsync($"/api/family/students/1003/{endpoint}");
+            await AssertNotFoundWithoutPrivateDataAsync(unlinked, "Student Three", "Other School Student", _host.FamilyOtherSchool.Email);
+            var crossSchool = await client.GetAsync($"/api/family/students/2001/{endpoint}");
+            await AssertNotFoundWithoutPrivateDataAsync(crossSchool, "Other School Student", "School Two Course", _host.FamilyOtherSchool.Email);
+        }
+
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.PostAsJsonAsync("/api/teacher/evaluations", new { CourseId = 1001, SubjectId = 1001, Title = "No", EvaluatedAt = DateTime.UtcNow })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.PutAsJsonAsync("/api/teacher/grades/1", new { Value = "No" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.PostAsJsonAsync("/api/admin/students/1001/records", new { Category = "Observation", Title = "No", Description = "No", RecordedAt = DateTime.UtcNow })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.PutAsJsonAsync("/api/teacher/submissions/6001/feedback", new { Observation = "No" })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Teachers_can_manage_only_assigned_grades_and_families_see_only_published_results()
+    {
+        var teacher = await _host.AuthenticateAsync(_host.TeacherOne);
+        using var teacherClient = teacher.Client;
+        teacherClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", teacher.AccessToken);
+
+        var evaluationResponse = await teacherClient.PostAsJsonAsync("/api/teacher/evaluations", new
+        {
+            CourseId = 1001, SubjectId = 1001, Title = "Evaluación de prueba", EvaluatedAt = DateTime.UtcNow
+        });
+        Assert.Equal(HttpStatusCode.Created, evaluationResponse.StatusCode);
+        using var evaluationJson = JsonDocument.Parse(await evaluationResponse.Content.ReadAsStringAsync());
+        var evaluationId = evaluationJson.RootElement.GetProperty("id").GetInt32();
+        var gradeResponse = await teacherClient.PostAsJsonAsync($"/api/teacher/evaluations/{evaluationId}/grades", new { StudentId = 1001, Value = "8" });
+        Assert.Equal(HttpStatusCode.Created, gradeResponse.StatusCode);
+        using var gradeJson = JsonDocument.Parse(await gradeResponse.Content.ReadAsStringAsync());
+        var gradeId = gradeJson.RootElement.GetProperty("id").GetInt32();
+
+        var family = await _host.AuthenticateAsync(_host.FamilyOne);
+        using var familyClient = family.Client;
+        familyClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", family.AccessToken);
+        using var beforePublish = JsonDocument.Parse(await familyClient.GetStringAsync("/api/family/students/1001/grades"));
+        Assert.Empty(beforePublish.RootElement.EnumerateArray());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await teacherClient.PostAsync($"/api/teacher/grades/{gradeId}/publish", null)).StatusCode);
+        using var afterPublish = JsonDocument.Parse(await familyClient.GetStringAsync("/api/family/students/1001/grades"));
+        Assert.Equal("8", afterPublish.RootElement[0].GetProperty("value").GetString());
+        Assert.DoesNotContain("createdByUserId", afterPublish.RootElement.GetRawText(), StringComparison.OrdinalIgnoreCase);
+
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await teacherClient.PostAsJsonAsync($"/api/teacher/evaluations/{evaluationId}/grades", new { StudentId = 2001, Value = "7" })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await teacherClient.PostAsJsonAsync("/api/teacher/evaluations", new
+            {
+                CourseId = 2001, SubjectId = 2001, Title = "Curso ajeno", EvaluatedAt = DateTime.UtcNow
+            })).StatusCode);
+
+        var administrator = await _host.AuthenticateAsync(_host.AdminOne);
+        using var adminClient = administrator.Client;
+        adminClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", administrator.AccessToken);
+        var otherTeacherEvaluation = await adminClient.PostAsJsonAsync("/api/teacher/evaluations", new
+        {
+            CourseId = 1001, SubjectId = 1001, TeacherId = 1002, Title = "Otra asignación", EvaluatedAt = DateTime.UtcNow
+        });
+        Assert.Equal(HttpStatusCode.Created, otherTeacherEvaluation.StatusCode);
+        using var otherEvaluationJson = JsonDocument.Parse(await otherTeacherEvaluation.Content.ReadAsStringAsync());
+        var otherEvaluationId = otherEvaluationJson.RootElement.GetProperty("id").GetInt32();
+        var otherGradeResponse = await adminClient.PostAsJsonAsync($"/api/teacher/evaluations/{otherEvaluationId}/grades", new { StudentId = 1001, Value = "7" });
+        Assert.Equal(HttpStatusCode.Created, otherGradeResponse.StatusCode);
+        using var otherGradeJson = JsonDocument.Parse(await otherGradeResponse.Content.ReadAsStringAsync());
+        var otherGradeId = otherGradeJson.RootElement.GetProperty("id").GetInt32();
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await teacherClient.PutAsJsonAsync($"/api/teacher/grades/{otherGradeId}", new { Value = "9" })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Submission_feedback_is_written_by_the_responsible_teacher_and_visible_to_linked_family()
+    {
+        var teacher = await _host.AuthenticateAsync(_host.TeacherOne);
+        using var teacherClient = teacher.Client;
+        teacherClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", teacher.AccessToken);
+        Assert.Equal(HttpStatusCode.NoContent, (await teacherClient.PutAsJsonAsync(
+            "/api/teacher/submissions/6001/feedback", new { Observation = "Buen trabajo, revisá el segundo ejercicio." })).StatusCode);
+
+        var family = await _host.AuthenticateAsync(_host.FamilyOne);
+        using var familyClient = family.Client;
+        familyClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", family.AccessToken);
+        using var activities = JsonDocument.Parse(await familyClient.GetStringAsync("/api/family/students/1001/activities"));
+        var submission = activities.RootElement[0].GetProperty("submission");
+        Assert.Equal("Buen trabajo, revisá el segundo ejercicio.", submission.GetProperty("teacherFeedback").GetString());
+        Assert.NotEqual(JsonValueKind.Null, submission.GetProperty("reviewedAt").ValueKind);
+
+        var otherTeacher = await _host.AuthenticateAsync(_host.TeacherTwo);
+        using var otherTeacherClient = otherTeacher.Client;
+        otherTeacherClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", otherTeacher.AccessToken);
+        Assert.Equal(HttpStatusCode.NotFound, (await otherTeacherClient.PutAsJsonAsync(
+            "/api/teacher/submissions/6001/feedback", new { Observation = "No autorizado" })).StatusCode);
+        Assert.DoesNotContain("No autorizado", await familyClient.GetStringAsync("/api/family/students/1001/activities"), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Family_records_require_explicit_visibility_and_never_include_confidential_notes()
+    {
+        var administrator = await _host.AuthenticateAsync(_host.AdminOne);
+        using var adminClient = administrator.Client;
+        adminClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", administrator.AccessToken);
+        var visible = await adminClient.PostAsJsonAsync("/api/admin/students/1001/records", new
+        {
+            Category = "Recognition", Title = "Reconocimiento", Description = "Detalle visible", RecordedAt = DateTime.UtcNow, IsVisibleToFamily = true
+        });
+        Assert.Equal(HttpStatusCode.Created, visible.StatusCode);
+        var hidden = await adminClient.PostAsJsonAsync("/api/admin/students/1001/records", new
+        {
+            Category = "Observation", Title = "Nota interna", Description = "Privado", RecordedAt = DateTime.UtcNow, IsVisibleToFamily = false
+        });
+        Assert.Equal(HttpStatusCode.Created, hidden.StatusCode);
+        var confidential = await adminClient.PostAsJsonAsync("/api/admin/students/1001/records", new
+        {
+            Category = "ConfidentialNote", Title = "Confidencial", Description = "Secreto", RecordedAt = DateTime.UtcNow, IsVisibleToFamily = true
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, confidential.StatusCode);
+
+        var family = await _host.AuthenticateAsync(_host.FamilyOne);
+        using var familyClient = family.Client;
+        familyClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", family.AccessToken);
+        using var records = JsonDocument.Parse(await familyClient.GetStringAsync("/api/family/students/1001/records"));
+        Assert.Single(records.RootElement.EnumerateArray());
+        Assert.Contains("Detalle visible", records.RootElement.GetRawText());
+        await AssertResponseDoesNotContainAsync(records, "Privado", "Secreto", "Confidencial", "Nota interna");
+    }
+
+    [Fact]
+    public async Task Authenticated_non_family_roles_cannot_access_family_portal_routes()
+    {
+        var student = await _host.AuthenticateAsync(_host.StudentOne);
+        using var client = student.Client;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", student.AccessToken);
+
+        var routes = new[]
+        {
+            "/api/family/students",
+            "/api/family/students/1001/attendance",
+            "/api/family/students/1001/activities",
+            "/api/family/students/1001/schedule",
+            "/api/family/students/1001/grades",
+            "/api/family/students/1001/records",
+            "/api/family/students/1001/activities/3001/materials",
+            "/api/family/students/1001/activities/3001/materials/8001/file"
+        };
+
+        foreach (var route in routes)
+            Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync(route)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Family_portal_rejects_unlinked_and_cross_school_student_ids_for_all_student_routes()
+    {
+        var family = await _host.AuthenticateAsync(_host.FamilyOne);
+        using var client = family.Client;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", family.AccessToken);
+
+        var privateValues = new[]
+        {
+            "Student Three", "Other School Student", "School Two Course",
+            _host.FamilyOtherSchool.Email, "other school material"
+        };
+        var protectedRoutes = new[]
+        {
+            "/api/family/students/1003/activities",
+            "/api/family/students/2001/activities",
+            "/api/family/students/1003/activities/3001/materials",
+            "/api/family/students/2001/activities/4001/materials",
+            "/api/family/students/2001/activities/4001/materials/8002/file"
+        };
+
+        foreach (var route in protectedRoutes)
+        {
+            var response = await client.GetAsync(route);
+            await AssertNotFoundWithoutPrivateDataAsync(response, privateValues);
+        }
+    }
+
+    [Fact]
+    public async Task Family_link_management_rejects_non_administrators_and_is_school_scoped()
+    {
+        foreach (var nonAdministrator in new[] { _host.StudentOne, _host.FamilyOne })
+        {
+            var authenticated = await _host.AuthenticateAsync(nonAdministrator);
+            using var client = authenticated.Client;
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authenticated.AccessToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/admin/family-links")).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/admin/family-links", new
+            {
+                FamilyUserId = "unauthorized-user", StudentId = 1001
+            })).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden,
+                (await client.DeleteAsync("/api/admin/family-links/unauthorized-user/1001")).StatusCode);
+        }
+
+        var schoolOneAdmin = await _host.AuthenticateAsync(_host.AdminOne);
+        using var schoolOneClient = schoolOneAdmin.Client;
+        schoolOneClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", schoolOneAdmin.AccessToken);
+        using var schoolOneLinks = JsonDocument.Parse(await schoolOneClient.GetStringAsync("/api/admin/family-links"));
+        var familyOneLink = schoolOneLinks.RootElement.EnumerateArray().Single(item =>
+            item.GetProperty("email").GetString() == _host.FamilyOne.Email && item.GetProperty("studentId").GetInt32() == 1001);
+        var familyOneId = familyOneLink.GetProperty("familyUserId").GetString()!;
+
+        var schoolTwoAdmin = await _host.AuthenticateAsync(_host.AdminTwo);
+        using var schoolTwoClient = schoolTwoAdmin.Client;
+        schoolTwoClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", schoolTwoAdmin.AccessToken);
+
+        using var schoolTwoLinks = JsonDocument.Parse(await schoolTwoClient.GetStringAsync("/api/admin/family-links"));
+        Assert.Contains(schoolTwoLinks.RootElement.EnumerateArray(), item =>
+            item.GetProperty("email").GetString() == _host.FamilyOtherSchool.Email && item.GetProperty("studentId").GetInt32() == 2001);
+        Assert.DoesNotContain(schoolTwoLinks.RootElement.EnumerateArray(), item =>
+            item.GetProperty("email").GetString() == _host.FamilyOne.Email || item.GetProperty("studentId").GetInt32() == 1001);
+        await AssertResponseDoesNotContainAsync(schoolTwoLinks, _host.FamilyOne.Email, "Student One", "School One Course");
+
+        using var filteredOtherSchoolLinks = JsonDocument.Parse(await schoolTwoClient.GetStringAsync(
+            $"/api/admin/family-links?familyUserId={Uri.EscapeDataString(familyOneId)}"));
+        Assert.Empty(filteredOtherSchoolLinks.RootElement.EnumerateArray());
+        await AssertResponseDoesNotContainAsync(filteredOtherSchoolLinks, _host.FamilyOne.Email, "Student One", "School One Course");
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await schoolTwoClient.DeleteAsync($"/api/admin/family-links/{Uri.EscapeDataString(familyOneId)}/1001")).StatusCode);
+
+        var family = await _host.AuthenticateAsync(_host.FamilyOne);
+        using var familyClient = family.Client;
+        familyClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", family.AccessToken);
+        Assert.Equal(HttpStatusCode.OK, (await familyClient.GetAsync("/api/family/students/1001/attendance")).StatusCode);
+    }
+
+    private static async Task AssertNotFoundWithoutPrivateDataAsync(HttpResponseMessage response, params string[] privateValues)
+    {
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertResponseDoesNotContainAsync(response, privateValues);
+    }
+
+    private static async Task AssertResponseDoesNotContainAsync(HttpResponseMessage response, params string[] privateValues)
+    {
+        await AssertResponseDoesNotContainAsync(await response.Content.ReadAsStringAsync(), privateValues);
+    }
+
+    private static async Task AssertResponseDoesNotContainAsync(JsonDocument response, params string[] privateValues)
+    {
+        await AssertResponseDoesNotContainAsync(response.RootElement.GetRawText(), privateValues);
+    }
+
+    private static Task AssertResponseDoesNotContainAsync(string responseBody, params string[] privateValues)
+    {
+        foreach (var privateValue in privateValues.Where(value => !string.IsNullOrWhiteSpace(value)))
+            Assert.DoesNotContain(privateValue, responseBody, StringComparison.OrdinalIgnoreCase);
+        return Task.CompletedTask;
+    }
+
+    [Fact]
+    public async Task School_administrator_manages_family_links_and_family_account_provisioning_is_school_scoped()
+    {
+        var admin = await _host.AuthenticateAsync(_host.AdminOne);
+        using var client = admin.Client;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", admin.AccessToken);
+
+        var email = _host.NewEmail();
+        var password = _host.NewPassword();
+        var created = await client.PostAsJsonAsync("/api/admin/accounts", new
+        {
+            Email = email, Password = password, Role = "Family", StudentIds = new[] { 1001 }
+        });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        using var createdJson = JsonDocument.Parse(await created.Content.ReadAsStringAsync());
+        var familyUserId = createdJson.RootElement.GetProperty("id").GetString()!;
+
+        var crossSchoolProvision = await client.PostAsJsonAsync("/api/admin/accounts", new
+        {
+            Email = _host.NewEmail(), Password = _host.NewPassword(), Role = "Family", StudentIds = new[] { 1001, 2001 }
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, crossSchoolProvision.StatusCode);
+
+        var added = await client.PostAsJsonAsync("/api/admin/family-links", new
+        {
+            FamilyUserId = familyUserId, StudentId = 1002
+        });
+        Assert.Equal(HttpStatusCode.Created, added.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsJsonAsync("/api/admin/family-links", new
+        {
+            FamilyUserId = familyUserId, StudentId = 1002
+        })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/admin/family-links", new
+        {
+            FamilyUserId = familyUserId, StudentId = 2001
+        })).StatusCode);
+
+        var familyUser = new TestUser(email, password, "Family", 1);
+        var family = await _host.AuthenticateAsync(familyUser);
+        using var familyClient = family.Client;
+        familyClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", family.AccessToken);
+        using var visibleStudents = JsonDocument.Parse(await familyClient.GetStringAsync("/api/family/students"));
+        Assert.Equal(new[] { 1001, 1002 }, visibleStudents.RootElement.EnumerateArray().Select(item => item.GetProperty("id").GetInt32()));
+
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await client.DeleteAsync($"/api/admin/family-links/{familyUserId}/1001")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await familyClient.GetAsync("/api/family/students/1001/attendance")).StatusCode);
+        foreach (var endpoint in new[] { "schedule", "grades", "records" })
+            Assert.Equal(HttpStatusCode.NotFound,
+                (await familyClient.GetAsync($"/api/family/students/1001/{endpoint}")).StatusCode);
+
+        var student = await _host.AuthenticateAsync(_host.StudentOne);
+        using var studentClient = student.Client;
+        studentClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", student.AccessToken);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await studentClient.PostAsJsonAsync("/api/admin/family-links", new { FamilyUserId = familyUserId, StudentId = 1003 })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await familyClient.PostAsJsonAsync("/api/admin/family-links", new { FamilyUserId = familyUserId, StudentId = 1003 })).StatusCode);
+    }
+
+    [Fact]
     public async Task Authorization_code_pkce_redirect_antiforgery_and_token_claims_are_enforced()
     {
         using var anonymous = _host.CreateClient();
@@ -248,6 +632,10 @@ public sealed class SecurityTestHost : IAsyncLifetime
         StudentOne = new TestUser(NewEmail(), NewPassword(), "Student", 1, studentId: 1001);
         StudentTwo = new TestUser(NewEmail(), NewPassword(), "Student", 1, studentId: 1002);
         TeacherOne = new TestUser(NewEmail(), NewPassword(), "Teacher", 1, teacherId: 1001);
+        TeacherTwo = new TestUser(NewEmail(), NewPassword(), "Teacher", 1, teacherId: 1002);
+        FamilyOne = new TestUser(NewEmail(), NewPassword(), "Family", 1);
+        FamilyTwo = new TestUser(NewEmail(), NewPassword(), "Family", 1);
+        FamilyOtherSchool = new TestUser(NewEmail(), NewPassword(), "Family", 2);
         _factory = new SecurityTestApplicationFactory(this);
     }
 
@@ -256,6 +644,10 @@ public sealed class SecurityTestHost : IAsyncLifetime
     public TestUser StudentOne { get; }
     public TestUser StudentTwo { get; }
     public TestUser TeacherOne { get; }
+    public TestUser TeacherTwo { get; }
+    public TestUser FamilyOne { get; }
+    public TestUser FamilyTwo { get; }
+    public TestUser FamilyOtherSchool { get; }
     public string RedirectUri => "http://localhost:5173/auth/callback";
     internal string StorageRoot => _storageRoot;
 
@@ -440,6 +832,9 @@ public sealed class SecurityTestHost : IAsyncLifetime
             new Teacher { Id = 1001, FirstName = "One", LastName = "Teacher", DocumentNumber = "1001", IsActive = true },
             new Teacher { Id = 1002, FirstName = "Other", LastName = "Teacher", DocumentNumber = "1002", IsActive = true });
         context.Subjects.Add(new Subject { Id = 1001, Name = "School One Subject" });
+        context.TeacherSchedules.AddRange(
+            new TeacherSchedule { Id = 1101, TeacherId = 1001, CourseId = 1001, SubjectId = 1001, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(8, 0, 0), EndTime = new TimeSpan(9, 0, 0) },
+            new TeacherSchedule { Id = 1102, TeacherId = 1002, CourseId = 1001, SubjectId = 1001, DayOfWeek = DayOfWeek.Tuesday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(10, 0, 0) });
         context.Students.AddRange(
             new Student { Id = 1001, FirstName = "Student", LastName = "One", DocumentNumber = "1101", CourseId = 1001 },
             new Student { Id = 1002, FirstName = "Student", LastName = "Two", DocumentNumber = "1102", CourseId = 1001 },
@@ -449,7 +844,12 @@ public sealed class SecurityTestHost : IAsyncLifetime
             Activity(3002, 1, 1002, 1001, 1001, published: true),
             Activity(3003, 1, 1001, 1001, 1001, published: false));
         context.ActivityStudents.AddRange(
-            Assignment(5001, 1, 3001, 1001), Assignment(5002, 1, 3001, 1002), Assignment(5003, 1, 3003, 1001));
+            Assignment(5001, 1, 3001, 1001), Assignment(5002, 1, 3001, 1002),
+            Assignment(5004, 1, 3002, 1002), Assignment(5003, 1, 3003, 1001));
+        context.Attendances.Add(new Attendance
+        {
+            Id = 8501, SchoolId = 1, StudentId = 1001, Date = DateTime.UtcNow.Date.AddDays(-1), Status = AttendanceStatus.Absent
+        });
         context.StudentSubmissions.AddRange(
             Submission(6001, 1, 5001, 7001, "3001"),
             Submission(6002, 1, 5002, 7002, "3001"));
@@ -464,11 +864,16 @@ public sealed class SecurityTestHost : IAsyncLifetime
         context.Courses.Add(new Course { Id = 2001, Name = "School Two Course" });
         context.Teachers.Add(new Teacher { Id = 2001, FirstName = "Other", LastName = "School Teacher", DocumentNumber = "2001", IsActive = true });
         context.Subjects.Add(new Subject { Id = 2001, Name = "School Two Subject" });
+        context.TeacherSchedules.Add(new TeacherSchedule { Id = 2101, TeacherId = 2001, CourseId = 2001, SubjectId = 2001, DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(8, 0, 0), EndTime = new TimeSpan(9, 0, 0) });
         context.Students.AddRange(
             new Student { Id = 2001, FirstName = "Other", LastName = "School Student", DocumentNumber = "2101", CourseId = 2001 },
             new Student { Id = 2002, FirstName = "Other", LastName = "School Student Two", DocumentNumber = "2102", CourseId = 2001 });
         context.Activities.Add(Activity(4001, 2, 2001, 2001, 2001, published: true));
         context.ActivityStudents.Add(Assignment(9001, 2, 4001, 2001));
+        context.Attendances.Add(new Attendance
+        {
+            Id = 8502, SchoolId = 2, StudentId = 2001, Date = DateTime.UtcNow.Date.AddDays(-1), Status = AttendanceStatus.Present
+        });
         context.StudentSubmissions.Add(Submission(9001, 2, 9001, 9002, "4001"));
         context.ActivityMaterials.Add(new ActivityMaterial
         {
@@ -488,9 +893,32 @@ public sealed class SecurityTestHost : IAsyncLifetime
         await AddIdentityUserAsync(StudentOne, confirmed: true);
         await AddIdentityUserAsync(StudentTwo, confirmed: true);
         await AddIdentityUserAsync(TeacherOne, confirmed: true);
-        await AddIdentityUserAsync(new TestUser(NewEmail(), NewPassword(), "Teacher", 1, teacherId: 1002), confirmed: true);
+        await AddIdentityUserAsync(TeacherTwo, confirmed: true);
         await AddIdentityUserAsync(new TestUser(NewEmail(), NewPassword(), "Student", 2, studentId: 2001), confirmed: true);
+        await AddIdentityUserAsync(FamilyOne, confirmed: true);
+        await AddIdentityUserAsync(FamilyTwo, confirmed: true);
+        await AddIdentityUserAsync(FamilyOtherSchool, confirmed: true);
         await AddIdentityUserAsync(AdminTwo, confirmed: true);
+        await AddFamilyLinksAsync(FamilyOne, 1001, 1002);
+        await AddFamilyLinksAsync(FamilyTwo, 1001);
+        await AddFamilyLinksAsync(FamilyOtherSchool, 2001);
+    }
+
+    private async Task AddFamilyLinksAsync(TestUser family, params int[] studentIds)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var accessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
+        accessor.HttpContext = SeedHttpContext(family.SchoolId);
+        var context = scope.ServiceProvider.GetRequiredService<SchoolContext>();
+        var user = await scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>().FindByEmailAsync(family.Email)
+            ?? throw new InvalidOperationException("Family test account was not found.");
+        context.FamilyStudentLinks.AddRange(studentIds.Select(studentId => new FamilyStudentLink
+        {
+            FamilyUserId = user.Id, StudentId = studentId, SchoolId = family.SchoolId,
+            LinkedAt = DateTime.UtcNow, LinkedByUserId = "test-school-admin"
+        }));
+        await context.SaveChangesAsync();
+        accessor.HttpContext = null;
     }
 
     private async Task AddIdentityUserAsync(TestUser account, bool confirmed)

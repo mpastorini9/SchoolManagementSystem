@@ -1,0 +1,245 @@
+.family-portal {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.family-portal-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--school-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.family-portal-header h2,
+.family-portal-section h3,
+.family-portal-activity h4,
+.family-portal-materials h5 {
+  margin: 0;
+}
+
+.family-portal-header > div > p:last-child {
+  margin: .4rem 0 0;
+  color: var(--school-text-secondary);
+}
+
+.family-portal-nav {
+  display: flex;
+  gap: .45rem;
+  overflow-x: auto;
+  padding: .3rem 0 .65rem;
+  border-bottom: 1px solid var(--school-border-light);
+}
+
+.family-portal-nav button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: .55rem .85rem;
+  border: 1px solid var(--school-border-light);
+  border-radius: 999px;
+  background: var(--school-white);
+  color: var(--school-text-secondary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.family-portal-nav button.active {
+  border-color: var(--school-blue);
+  background: var(--school-blue);
+  color: var(--school-white);
+}
+
+.family-section-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.family-section-heading p,
+.family-portal-note {
+  margin: .35rem 0 0;
+  color: var(--school-text-secondary);
+}
+
+.family-filter { display: grid; gap: .3rem; color: var(--school-text-secondary); font-size: .9rem; }
+.family-filter select { min-height: 38px; padding: .35rem .55rem; border: 1px solid var(--school-border); border-radius: var(--radius-sm); background: var(--school-white); color: var(--school-text); }
+
+.family-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: .7rem;
+}
+
+.family-stat {
+  display: grid;
+  gap: .35rem;
+  padding: .9rem;
+  border: 1px solid var(--school-border-light);
+  border-radius: var(--radius-md);
+  background: var(--school-surface-soft);
+}
+
+.family-stat span { color: var(--school-text-secondary); font-size: .88rem; }
+.family-stat strong { color: var(--school-text); font-size: 1.45rem; }
+.family-stat-grid.compact { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.family-status-pill { justify-self: start; margin: 0; padding: .25rem .6rem; border-radius: 999px; background: var(--school-white); color: var(--school-blue); font-size: .86rem; font-weight: 700; }
+.family-submission { display: grid; justify-items: start; gap: .45rem; padding-top: .7rem; border-top: 1px solid var(--school-border-light); }
+.family-submission p { margin: 0; white-space: pre-wrap; }
+.family-link-button { border: 0; padding: 0; background: none; color: var(--school-blue); font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+.family-subject-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+.family-subject-list span { padding: .4rem .7rem; border: 1px solid var(--school-border-light); border-radius: 999px; background: var(--school-surface-soft); }
+.family-shortcuts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .65rem; }
+.family-shortcuts button { display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 52px; padding: .75rem .9rem; border: 1px solid var(--school-border-light); border-radius: var(--radius-md); background: var(--school-white); color: var(--school-blue); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.family-summary-row { display: flex; justify-content: space-between; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--school-border-light); }
+.family-summary-row span { color: var(--school-text-secondary); text-align: right; }
+.family-record-list { display: grid; gap: .75rem; }
+.family-record { padding: 1rem; border: 1px solid var(--school-border-light); border-radius: var(--radius-md); }
+.family-record h4 { margin: .3rem 0; }
+.family-record > p:last-child { margin: 0; white-space: pre-wrap; }
+
+.family-portal-eyebrow,
+.family-portal-activity-meta {
+  margin: 0 0 .35rem;
+  color: var(--school-text-secondary);
+  font-size: .9rem;
+}
+
+.family-child-picker {
+  display: grid;
+  gap: .4rem;
+  min-width: min(100%, 260px);
+  color: var(--school-text-secondary);
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.family-child-picker select {
+  min-height: 42px;
+  padding: .5rem .7rem;
+  border: 1px solid var(--school-border);
+  border-radius: var(--radius-sm);
+  background: var(--school-white);
+  color: var(--school-text);
+}
+
+.family-portal-child {
+  margin: 0;
+  color: var(--school-text-secondary);
+  font-weight: 600;
+}
+
+.family-portal-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, .8fr) minmax(0, 1.4fr);
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.family-portal-section {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--school-border-light);
+  border-radius: var(--radius-lg);
+  background: var(--school-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.family-portal-table-wrap {
+  overflow-x: auto;
+}
+
+.family-portal-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.family-portal-table th,
+.family-portal-table td {
+  padding: .75rem .5rem;
+  border-bottom: 1px solid var(--school-border-light);
+}
+
+.family-portal-table th {
+  color: var(--school-text-secondary);
+  font-size: .9rem;
+}
+
+.family-portal-activities {
+  display: grid;
+  gap: .9rem;
+}
+
+.family-agenda-group { display: grid; gap: .75rem; }
+.family-agenda-heading { display: flex; align-items: center; gap: .55rem; }
+.family-agenda-heading h4 { margin: 0; color: var(--school-navy); font-size: 1rem; }
+
+.family-portal-activity {
+  display: grid;
+  gap: .55rem;
+  padding: 1rem;
+  border: 1px solid var(--school-border-light);
+  border-radius: var(--radius-md);
+  background: var(--school-surface-soft);
+}
+
+.family-portal-activity > p:not(.family-portal-activity-meta) {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.family-portal-materials {
+  display: grid;
+  gap: .6rem;
+  margin-top: .3rem;
+}
+
+.family-portal-material {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.family-portal-material a,
+.family-portal-material button {
+  color: var(--school-blue);
+  font-weight: 600;
+}
+
+.family-portal-alert,
+.family-portal-empty {
+  margin: 0;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--school-surface-soft);
+  color: var(--school-text-secondary);
+}
+
+.family-portal-alert {
+  background: var(--school-danger-soft);
+  color: var(--school-danger);
+}
+
+@media (max-width: 760px) {
+  .family-portal-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .family-portal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .family-portal-nav { margin-right: -.25rem; }
+  .family-section-heading { flex-direction: column; }
+  .family-summary-row { align-items: start; flex-direction: column; gap: .25rem; }
+  .family-summary-row span { text-align: left; }
+}

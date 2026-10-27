@@ -1,0 +1,50 @@
+.student-activities { max-width: 1040px; margin: 0 auto; }
+.student-activities-header, .student-activity-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.student-activities-header { margin-bottom: 24px; }
+.student-activities-header h2 { margin: 0; color: var(--school-navy); font-size: 1.8rem; }
+.student-activities-header p:last-child { margin: 7px 0 0; color: var(--school-text-secondary); }
+.student-activities-eyebrow { margin: 0 0 5px; color: var(--school-red-dark); font-size: .76rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.student-activities-refresh, .student-submission-form button, .student-activity-material button, .student-revision-list button { min-height: 40px; padding: 9px 15px; border: 0; border-radius: var(--radius-sm); background: var(--school-blue); color: white; font-weight: 700; }
+.student-activities-refresh:hover, .student-submission-form button:hover:not(:disabled), .student-activity-material button:hover, .student-revision-list button:hover { background: var(--school-navy); }
+.student-activities-alert { margin: 0 0 16px; padding: 12px 15px; border-radius: var(--radius-md); }
+.student-activities-alert--error { background: var(--school-danger-soft); color: var(--school-danger); }
+.student-activities-alert--success { background: var(--school-success-soft); color: var(--school-success); }
+.student-activities-empty { padding: 38px 24px; border: 1px dashed var(--school-border); border-radius: var(--radius-lg); background: white; color: var(--school-text-secondary); text-align: center; }
+.student-activities-agenda { display: grid; gap: 22px; }
+.student-activities-agenda-group { display: grid; gap: 12px; }
+.student-activities-agenda-heading { display: flex; align-items: center; gap: 9px; margin: 0; }
+.student-activities-agenda-heading h3 { margin: 0; color: var(--school-navy); font-size: 1.05rem; }
+.student-activities-agenda-heading span, .family-agenda-heading span { min-width: 24px; padding: 3px 8px; border-radius: var(--radius-pill); background: var(--school-surface-soft); color: var(--school-text-secondary); font-size: .78rem; font-weight: 750; text-align: center; }
+.student-activities-list { display: grid; gap: 18px; }
+.student-activity-card { padding: 22px; border: 1px solid var(--school-border); border-radius: var(--radius-lg); background: white; box-shadow: var(--shadow-sm); }
+.student-activity-course { margin: 0 0 5px; color: var(--school-blue); font-size: .84rem; font-weight: 700; }
+.student-activity-heading h3 { margin: 0; color: var(--school-navy); font-size: 1.2rem; }
+.student-activity-badge { flex: 0 0 auto; padding: 6px 11px; border-radius: var(--radius-pill); background: var(--school-warning-soft); color: var(--school-warning); font-size: .77rem; font-weight: 800; }
+.student-activity-badge.is-submitted { background: #eaf1ff; color: var(--school-blue); }
+.student-activity-badge.is-overdue { background: var(--school-danger-soft); color: var(--school-danger); }
+.student-activity-badge.has-feedback { background: var(--school-success-soft); color: var(--school-success); }
+.student-activity-description { white-space: pre-wrap; line-height: 1.6; }
+.student-activity-meta, .student-activity-muted { color: var(--school-text-secondary); font-size: .9rem; }
+.student-activity-materials, .student-submission-review { margin-top: 18px; padding: 16px; border-radius: var(--radius-md); background: var(--school-surface-soft); }
+.student-activity-materials h4 { margin: 0 0 10px; color: var(--school-navy); }
+.student-activity-material { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--school-border-light); }
+.student-activity-material a { color: var(--school-red-dark); font-weight: 700; }
+.student-activity-material button, .student-revision-list button { min-height: 34px; padding: 7px 11px; font-size: .85rem; }
+.student-submission-review > p { margin: 5px 0; line-height: 1.5; }
+.student-activity-history-button { margin-top: 8px; padding: 7px 0; border: 0; background: transparent; color: var(--school-blue); font-weight: 800; text-decoration: underline; }
+.student-revision-list { display: grid; gap: 12px; padding-left: 22px; }
+.student-revision-list li { padding-left: 4px; }
+.student-revision-list li > span { font-weight: 700; }
+.student-revision-list p { white-space: pre-wrap; }
+.student-submission-form { display: grid; gap: 10px; margin-top: 20px; }
+.student-submission-form label { color: var(--school-text); font-size: .9rem; font-weight: 700; }
+.student-submission-form textarea { width: 100%; padding: 11px 13px; border: 1px solid var(--school-border); border-radius: var(--radius-sm); resize: vertical; line-height: 1.5; }
+.student-submission-form textarea:focus-visible, .student-submission-form input:focus-visible { outline: 3px solid rgba(49,84,181,.22); outline-offset: 2px; }
+.student-submission-form button { justify-self: start; background: var(--school-red); }
+.student-submission-form button:hover:not(:disabled) { background: var(--school-red-dark); }
+.student-submission-form button:disabled { opacity: .6; }
+@media (max-width: 640px) {
+  .student-activities-header, .student-activity-heading, .student-activity-material { align-items: stretch; flex-direction: column; }
+  .student-activities-refresh, .student-submission-form button { width: 100%; }
+  .student-activity-card { padding: 17px; }
+}

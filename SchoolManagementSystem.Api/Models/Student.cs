@@ -15,5 +15,7 @@ namespace SchoolManagementSystem.Api.Models
 
         public ApplicationUser? User { get; set; }
 
+        public ICollection<FamilyStudentLink> FamilyStudentLinks { get; set; } = new List<FamilyStudentLink>();
+
     }
 }

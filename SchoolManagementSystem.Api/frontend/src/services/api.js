@@ -266,6 +266,42 @@ export function getStudentSubmissionRevisions(submissionId) {
   return requestJson(`${API_URL}/student/submissions/${submissionId}/revisions`);
 }
 
+export function getFamilyStudents() {
+  return requestJson(`${API_URL}/family/students`);
+}
+
+export function getFamilyStudentAttendance(studentId) {
+  return requestJson(`${API_URL}/family/students/${studentId}/attendance`);
+}
+
+export function getFamilyStudentSchedule(studentId) {
+  return requestJson(`${API_URL}/family/students/${studentId}/schedule`);
+}
+
+export function getFamilyStudentGrades(studentId) {
+  return requestJson(`${API_URL}/family/students/${studentId}/grades`);
+}
+
+export function getFamilyStudentRecords(studentId) {
+  return requestJson(`${API_URL}/family/students/${studentId}/records`);
+}
+
+export function getFamilyStudentActivities(studentId) {
+  return requestJson(`${API_URL}/family/students/${studentId}/activities`);
+}
+
+export function getFamilyActivityMaterials(studentId, activityId) {
+  return requestJson(`${API_URL}/family/students/${studentId}/activities/${activityId}/materials`);
+}
+
+export async function downloadFamilyActivityMaterialFile(studentId, activityId, materialId, fileName) {
+  await downloadFile(`${API_URL}/family/students/${studentId}/activities/${activityId}/materials/${materialId}/file`, fileName);
+}
+
+export async function downloadFamilySubmissionFile(studentId, activityId, submissionId, revisionId, fileName) {
+  await downloadFile(`${API_URL}/family/students/${studentId}/activities/${activityId}/submissions/${submissionId}/revisions/${revisionId}/file`, fileName);
+}
+
 export async function downloadStudentSubmissionFile(submissionId, revisionId, fileName) {
   await downloadFile(`${API_URL}/student/submissions/${submissionId}/revisions/${revisionId}/file`, fileName);
 }

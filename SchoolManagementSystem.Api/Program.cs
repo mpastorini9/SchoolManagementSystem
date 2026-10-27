@@ -226,7 +226,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    foreach (var role in new[] { SchoolRoles.SchoolAdministrator, SchoolRoles.Teacher, SchoolRoles.Student })
+    foreach (var role in new[] { SchoolRoles.SchoolAdministrator, SchoolRoles.Teacher, SchoolRoles.Student, SchoolRoles.Family })
     {
         if (!await roleManager.RoleExistsAsync(role))
         {

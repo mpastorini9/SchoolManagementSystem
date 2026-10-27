@@ -11,5 +11,7 @@ namespace SchoolManagementSystem.Api.Models
 
         public int? TeacherId { get; set; }
         public Teacher? Teacher { get; set; }
+
+        public ICollection<FamilyStudentLink> FamilyStudentLinks { get; set; } = new List<FamilyStudentLink>();
     }
 }

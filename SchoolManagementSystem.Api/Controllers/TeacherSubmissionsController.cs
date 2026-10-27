@@ -75,6 +75,19 @@ public sealed class TeacherSubmissionsController : ControllerBase
         }));
     }
 
+    [HttpPut("submissions/{submissionId:int}/feedback")]
+    public async Task<IActionResult> SaveFeedback(int submissionId, SaveSubmissionFeedbackRequest request, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Observation) || request.Observation.Trim().Length > 4000)
+            return BadRequest("La devolución debe contener entre 1 y 4000 caracteres.");
+        var submission = GetReviewableSubmission(submissionId);
+        if (submission is null) return NotFound();
+        submission.TeacherObservation = request.Observation.Trim();
+        submission.ReceivedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     [HttpGet("submissions/{submissionId:int}/revisions/{revisionId:int}/file")]
     public IActionResult DownloadRevision(int submissionId, int revisionId)
     {
@@ -104,3 +117,5 @@ public sealed class TeacherSubmissionsController : ControllerBase
         (User.IsInRole(SchoolRoles.Teacher) && int.TryParse(User.FindFirst("teacher_id")?.Value, out var currentTeacherId) && currentTeacherId == teacherId &&
          _context.Teachers.Any(teacher => teacher.Id == currentTeacherId && teacher.IsActive));
 }
+
+public sealed record SaveSubmissionFeedbackRequest(string Observation);

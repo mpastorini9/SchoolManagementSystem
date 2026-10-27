@@ -366,6 +366,50 @@ namespace SchoolManagementSystem.Api.Data.Migrations
                     b.ToTable("OpenIddictTokens", (string)null);
                 });
 
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.AcademicEvaluation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EvaluatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SchoolId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SchoolId");
+
+                    b.HasIndex("CourseId", "SchoolId");
+
+                    b.HasIndex("SubjectId", "SchoolId");
+
+                    b.HasIndex("TeacherId", "SchoolId");
+
+                    b.ToTable("AcademicEvaluations");
+                });
+
             modelBuilder.Entity("SchoolManagementSystem.Api.Models.Activity", b =>
                 {
                     b.Property<int>("Id")
@@ -654,6 +698,45 @@ namespace SchoolManagementSystem.Api.Data.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.FamilyStudentLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FamilyUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("LinkedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LinkedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SchoolId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SchoolId");
+
+                    b.HasIndex("FamilyUserId", "SchoolId");
+
+                    b.HasIndex("StudentId", "SchoolId");
+
+                    b.HasIndex("FamilyUserId", "StudentId", "SchoolId")
+                        .IsUnique();
+
+                    b.ToTable("FamilyStudentLinks");
+                });
+
             modelBuilder.Entity("SchoolManagementSystem.Api.Models.School", b =>
                 {
                     b.Property<int>("Id")
@@ -710,6 +793,106 @@ namespace SchoolManagementSystem.Api.Data.Migrations
                     b.HasIndex("SchoolId");
 
                     b.ToTable("Students");
+                });
+
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.StudentGrade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EvaluationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SchoolId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SchoolId");
+
+                    b.HasIndex("EvaluationId", "SchoolId");
+
+                    b.HasIndex("StudentId", "SchoolId");
+
+                    b.HasIndex("EvaluationId", "StudentId", "SchoolId")
+                        .IsUnique();
+
+                    b.ToTable("StudentGrades");
+                });
+
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.StudentRecordEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsVisibleToFamily")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SchoolId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SchoolId");
+
+                    b.HasIndex("StudentId", "SchoolId", "RecordedAt");
+
+                    b.ToTable("StudentRecordEntries");
                 });
 
             modelBuilder.Entity("SchoolManagementSystem.Api.Models.StudentSubmission", b =>
@@ -1004,6 +1187,42 @@ namespace SchoolManagementSystem.Api.Data.Migrations
                     b.Navigation("Authorization");
                 });
 
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.AcademicEvaluation", b =>
+                {
+                    b.HasOne("SchoolManagementSystem.Api.Models.School", null)
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagementSystem.Api.Models.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId", "SchoolId")
+                        .HasPrincipalKey("Id", "SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagementSystem.Api.Models.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId", "SchoolId")
+                        .HasPrincipalKey("Id", "SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagementSystem.Api.Models.Teacher", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId", "SchoolId")
+                        .HasPrincipalKey("Id", "SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Subject");
+
+                    b.Navigation("Teacher");
+                });
+
             modelBuilder.Entity("SchoolManagementSystem.Api.Models.Activity", b =>
                 {
                     b.HasOne("SchoolManagementSystem.Api.Models.Course", "Course")
@@ -1138,6 +1357,33 @@ namespace SchoolManagementSystem.Api.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.FamilyStudentLink", b =>
+                {
+                    b.HasOne("SchoolManagementSystem.Api.Models.School", null)
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagementSystem.Api.Models.ApplicationUser", "FamilyUser")
+                        .WithMany("FamilyStudentLinks")
+                        .HasForeignKey("FamilyUserId", "SchoolId")
+                        .HasPrincipalKey("Id", "SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagementSystem.Api.Models.Student", "Student")
+                        .WithMany("FamilyStudentLinks")
+                        .HasForeignKey("StudentId", "SchoolId")
+                        .HasPrincipalKey("Id", "SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FamilyUser");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("SchoolManagementSystem.Api.Models.Student", b =>
                 {
                     b.HasOne("SchoolManagementSystem.Api.Models.Course", "Course")
@@ -1153,6 +1399,51 @@ namespace SchoolManagementSystem.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.StudentGrade", b =>
+                {
+                    b.HasOne("SchoolManagementSystem.Api.Models.School", null)
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagementSystem.Api.Models.AcademicEvaluation", "Evaluation")
+                        .WithMany("Grades")
+                        .HasForeignKey("EvaluationId", "SchoolId")
+                        .HasPrincipalKey("Id", "SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagementSystem.Api.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId", "SchoolId")
+                        .HasPrincipalKey("Id", "SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Evaluation");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.StudentRecordEntry", b =>
+                {
+                    b.HasOne("SchoolManagementSystem.Api.Models.School", null)
+                        .WithMany()
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SchoolManagementSystem.Api.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId", "SchoolId")
+                        .HasPrincipalKey("Id", "SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("SchoolManagementSystem.Api.Models.StudentSubmission", b =>
@@ -1269,6 +1560,16 @@ namespace SchoolManagementSystem.Api.Data.Migrations
                     b.Navigation("Tokens");
                 });
 
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.AcademicEvaluation", b =>
+                {
+                    b.Navigation("Grades");
+                });
+
+            modelBuilder.Entity("SchoolManagementSystem.Api.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("FamilyStudentLinks");
+                });
+
             modelBuilder.Entity("SchoolManagementSystem.Api.Models.Course", b =>
                 {
                     b.Navigation("Students");
@@ -1277,6 +1578,8 @@ namespace SchoolManagementSystem.Api.Data.Migrations
             modelBuilder.Entity("SchoolManagementSystem.Api.Models.Student", b =>
                 {
                     b.Navigation("Attendances");
+
+                    b.Navigation("FamilyStudentLinks");
 
                     b.Navigation("User");
                 });
